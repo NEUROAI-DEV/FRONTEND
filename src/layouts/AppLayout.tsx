@@ -33,7 +33,7 @@ import { blue, grey } from '@mui/material/colors';
 import { useAppContext } from '../context/app.context';
 import { useToken } from '../hooks/token';
 import { IconMenus } from '../components/icon';
-import logo from '../assets/logo.jpg';
+import logo from '../assets/logo.webp';
 
 const drawerWidth = 240;
 
@@ -177,7 +177,7 @@ export default function AppLayout() {
                                     color: blue[800],
                                 }}
                             >
-                                FRESH
+                                LEORA
                             </Typography>
                         </Box>
 

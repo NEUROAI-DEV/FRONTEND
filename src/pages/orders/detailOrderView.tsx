@@ -36,7 +36,10 @@ export default function DetailOrderView() {
             path: '/orders/detail/' + orderId,
         });
         if (result) {
-            const images = result?.product?.productImages || [];
+            const images =
+                result?.product?.productImages && Array.isArray(result?.product?.productImages)
+                    ? result.product.productImages
+                    : [];
             setProductImages(images);
             setDetailOrder(result);
             setOrderStatus(result.orderStatus);
