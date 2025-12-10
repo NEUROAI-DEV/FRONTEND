@@ -11,10 +11,11 @@ import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
 import AddShoppingCartOutlinedIcon from '@mui/icons-material/AddShoppingCartOutlined';
 import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsActiveOutlined';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
+import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 
 export const IconMenus = {
     dashboard: SpaceDashboardOutlinedIcon,
-    products: StorefrontIcon,
+    products: ShoppingBagOutlinedIcon,
     category: CategoryOutlinedIcon,
     customers: PeopleAltOutlinedIcon,
     notification: NotificationsActiveOutlinedIcon,

@@ -1,4 +1,4 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useEffect, useState } from 'react';
 import { styled, useTheme, Theme, CSSObject } from '@mui/material/styles';
 import {
     Box,
@@ -28,16 +28,14 @@ import {
 } from '@mui/material';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { blue, grey } from '@mui/material/colors';
 import { useAppContext } from '../context/app.context';
 import { useToken } from '../hooks/token';
 import { IconMenus } from '../components/icon';
 import logo from '../assets/logo.webp';
 
 const drawerWidth = 240;
+const primaryColor = '#EA68B4';
 
-/* === Drawer animation & styles === */
 const openedMixin = (theme: Theme): CSSObject => ({
     width: drawerWidth,
     transition: theme.transitions.create('width', {
@@ -74,10 +72,10 @@ interface AppBarProps extends MuiAppBarProps {
 const AppBar = styled(MuiAppBar, {
     shouldForwardProp: (prop) => prop !== 'open',
 })<AppBarProps>(({ theme, open }) => ({
-    backdropFilter: 'blur(12px)',
-    background: 'rgba(255, 255, 255, 0.7)',
-    color: grey[800],
-    borderBottom: '1px solid rgba(0,0,0,0.05)',
+    backdropFilter: 'blur(14px)',
+    background: 'rgba(255, 255, 255, 0.82)',
+    color: primaryColor,
+    borderBottom: `2px solid ${primaryColor}20`,
     boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
     transition: theme.transitions.create(['width', 'margin'], {
         easing: theme.transitions.easing.easeOut,
@@ -91,9 +89,8 @@ const AppBar = styled(MuiAppBar, {
 
 const Drawer = styled(MuiDrawer, {
     shouldForwardProp: (prop) => prop !== 'open',
-})(({ theme, open }) => ({
+})<{ open?: boolean }>(({ theme, open }) => ({
     zIndex: theme.zIndex.drawer + 1,
-
     width: drawerWidth,
     flexShrink: 0,
     whiteSpace: 'nowrap',
@@ -102,7 +99,7 @@ const Drawer = styled(MuiDrawer, {
         ...openedMixin(theme),
         '& .MuiDrawer-paper': {
             ...openedMixin(theme),
-            background: `linear-gradient(180deg, ${blue[700]} 0%, ${blue[600]} 100%)`,
+            background: `linear-gradient(180deg, ${primaryColor} 0%, #F9C2E3 100%)`,
             color: '#fff',
             borderRight: 'none',
             boxShadow: '4px 0 20px rgba(0,0,0,0.1)',
@@ -112,7 +109,7 @@ const Drawer = styled(MuiDrawer, {
         ...closedMixin(theme),
         '& .MuiDrawer-paper': {
             ...closedMixin(theme),
-            background: `linear-gradient(180deg, ${blue[700]} 0%, ${blue[600]} 100%)`,
+            background: `linear-gradient(180deg, ${primaryColor} 0%, #F9C2E3 100%)`,
             color: '#fff',
             borderRight: 'none',
             boxShadow: '4px 0 20px rgba(0,0,0,0.05)',
@@ -151,7 +148,7 @@ export default function AppLayout() {
     }, []);
 
     return (
-        <Box sx={{ display: 'flex', bgcolor: grey[50], minHeight: '100vh' }}>
+        <Box sx={{ display: 'flex', bgcolor: '#FFF7FB', minHeight: '100vh' }}>
             <CssBaseline />
 
             {/* === APP BAR === */}
@@ -174,10 +171,10 @@ export default function AppLayout() {
                                     ml: 1.5,
                                     fontWeight: 700,
                                     letterSpacing: '.1rem',
-                                    color: blue[800],
+                                    color: primaryColor,
                                 }}
                             >
-                                LEORA
+                                MELLEBEE
                             </Typography>
                         </Box>
 
@@ -185,7 +182,7 @@ export default function AppLayout() {
 
                         {/* USER MENU */}
                         <Tooltip title="Account settings">
-                            <IconButton onClick={handleOpenUserMenu}>
+                            <IconButton onClick={handleOpenUserMenu} size="large">
                                 <Avatar alt="User" src="/static/images/avatar/2.jpg" />
                             </IconButton>
                         </Tooltip>
@@ -242,23 +239,21 @@ export default function AppLayout() {
                                 borderRadius: 2,
                                 backgroundColor:
                                     activeLink === item.link
-                                        ? 'rgba(255,255,255,0.15)'
+                                        ? 'rgba(255,255,255,0.28)'
                                         : 'transparent',
                                 transition: 'all 0.25s ease',
                                 '&:hover': {
-                                    backgroundColor: 'rgba(255,255,255,0.25)',
+                                    backgroundColor: 'rgba(255,255,255,0.45)',
                                     transform: 'translateX(4px)',
                                 },
+                                position: 'relative',
                             }}
                             onClick={() => {
                                 setActiveLink(item.link);
                                 localStorage.setItem('activeSidebarLink', item.link);
                             }}
                         >
-                            <Link
-                                to={item.link}
-                                style={{ textDecoration: 'none', color: 'inherit' }}
-                            >
+                            <Link to={item.link} style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}>
                                 <ListItemButton
                                     sx={{
                                         minHeight: 46,
@@ -272,19 +267,35 @@ export default function AppLayout() {
                                             mr: openDrawer ? 2.5 : 'auto',
                                             justifyContent: 'center',
                                             color: '#fff',
-                                            opacity: activeLink === item.link ? 1 : 0.8,
+                                            opacity: activeLink === item.link ? 1 : 0.9,
                                         }}
                                     >
+                                        {/* IconMenus should render an SVG or component */}
                                         {item.icon}
                                     </ListItemIcon>
                                     <ListItemText
                                         primary={item.title}
                                         sx={{
                                             opacity: openDrawer ? 1 : 0,
-                                            fontWeight: activeLink === item.link ? 600 : 400,
+                                            fontWeight: activeLink === item.link ? 700 : 500,
+                                            color: '#fff',
                                         }}
                                     />
                                 </ListItemButton>
+                                {/* Active indicator (left bar) */}
+                                {activeLink === item.link && (
+                                    <Box
+                                        sx={{
+                                            position: 'absolute',
+                                            left: 4,
+                                            top: 8,
+                                            bottom: 8,
+                                            width: 4,
+                                            bgcolor: 'rgba(255,255,255,0.9)',
+                                            borderRadius: 2,
+                                        }}
+                                    />
+                                )}
                             </Link>
                         </ListItem>
                     ))}
@@ -311,7 +322,7 @@ export default function AppLayout() {
                 )}
                 <Stack direction="row" justifyContent="flex-end">
                     <Snackbar
-                        open={appAlert.isDisplayAlert}
+                        open={appAlert?.isDisplayAlert ?? false}
                         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                         autoHideDuration={4000}
                         onClose={() =>
@@ -322,9 +333,9 @@ export default function AppLayout() {
                             })
                         }
                     >
-                        <Alert severity={appAlert.alertType}>
-                            <AlertTitle>{appAlert.alertType?.toUpperCase()}</AlertTitle>
-                            {appAlert.message}
+                        <Alert severity={appAlert?.alertType} sx={{ bgcolor: '#fff' }}>
+                            <AlertTitle sx={{ textTransform: 'uppercase' }}>{appAlert?.alertType}</AlertTitle>
+                            {appAlert?.message}
                         </Alert>
                     </Snackbar>
                 </Stack>

@@ -134,6 +134,7 @@ const DashboardView = () => {
                             options={{
                                 chart: { height: 350, type: 'area', toolbar: { show: false } },
                                 dataLabels: { enabled: false },
+                                colors: ['#EA68B4'],
                                 stroke: { curve: 'smooth', width: 2 },
                                 fill: {
                                     type: 'gradient',
