@@ -8,12 +8,7 @@ import {
   Card,
   Chip,
   Divider,
-  FormControl,
-  FormControlLabel,
-  FormLabel,
   Grid,
-  Radio,
-  RadioGroup,
   Stack,
   Typography,
 } from "@mui/material";
@@ -26,17 +21,22 @@ import { Carousel } from "react-responsive-carousel";
 import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
 import { getImageUrl } from "../../utilities/getImageUrl";
+import {
+  IConfirmShippingRequest,
+  ICreateShippingDraftRequest,
+} from "../../interfaces/Shipping";
+import { IOrder, IOrderDetail } from "../../interfaces/Order";
 
 export default function DetailOrderView() {
   const { handleGetRequest, handleUpdateRequest } = useHttp();
   const { orderId } = useParams();
   const navigate = useNavigate();
 
-  const [detailOrder, setDetailOrder] = useState<IOrdersModel | null>(null);
+  const [detailOrder, setDetailOrder] = useState<IOrderDetail | null>(null);
   const [orderStatus, setOrderStatus] = useState("");
 
   const getDetailOrder = async () => {
-    const result: IOrdersModel = await handleGetRequest({
+    const result: IOrderDetail = await handleGetRequest({
       path: "/orders/detail/" + orderId,
     });
 
@@ -55,6 +55,38 @@ export default function DetailOrderView() {
 
       await handleUpdateRequest({ path: "/orders", body: payload });
       navigate("/orders");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleUpdateOrderToDraft = async () => {
+    try {
+      const payload: ICreateShippingDraftRequest = {
+        orderId: orderId ? Number(orderId) : 0,
+        courierCompany: detailOrder?.orderCourierCode ?? "",
+        courierType: "reg",
+        deliveryType: "now",
+      };
+
+      await handleUpdateRequest({ path: "/shipping/draft", body: payload });
+      getDetailOrder();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleUpdateConfirmDraft = async () => {
+    try {
+      const payload: IConfirmShippingRequest = {
+        orderId: orderId ? Number(orderId) : 0,
+      };
+
+      await handleUpdateRequest({
+        path: "/shipping/draft/confirm",
+        body: payload,
+      });
+      getDetailOrder();
     } catch (error) {
       console.error(error);
     }
@@ -90,7 +122,9 @@ export default function DetailOrderView() {
               {(detailOrder.orderItems ?? []).map((item, index) => (
                 <Box key={index}>
                   <img
-                    src={getImageUrl(item.product.productImages[0] ?? "")}
+                    src={
+                      "https://jasaapk.us/file-server/api/uploads/vitamin1-1762730459122.jpg"
+                    }
                     alt={item.productNameSnapshot}
                     style={{ maxHeight: 400, objectFit: "contain" }}
                   />
@@ -181,33 +215,21 @@ export default function DetailOrderView() {
           />
         </Stack>
 
-        {/* ================= UPDATE STATUS ================= */}
-        <Divider sx={{ my: 4 }} />
-        <FormControl>
-          <FormLabel>Status Pesanan</FormLabel>
-          <RadioGroup
-            row
-            value={orderStatus}
-            onChange={(e) => setOrderStatus(e.target.value)}
-          >
-            {["waiting", "process", "delivery", "done", "cancel"].map(
-              (status) => (
-                <FormControlLabel
-                  key={status}
-                  value={status}
-                  control={<Radio />}
-                  label={status}
-                />
-              )
-            )}
-          </RadioGroup>
-        </FormControl>
+        {detailOrder.orderStatus === "process" && (
+          <Stack direction="row" justifyContent="flex-end" sx={{ mt: 5 }}>
+            <Button variant="contained" onClick={handleUpdateOrderToDraft}>
+              Buat Draft Pengiriman
+            </Button>
+          </Stack>
+        )}
 
-        <Stack direction="row" justifyContent="flex-end" sx={{ mt: 3 }}>
-          <Button variant="contained" onClick={handleUpdate}>
-            Update Status
-          </Button>
-        </Stack>
+        {detailOrder.orderStatus === "draft" && (
+          <Stack direction="row" justifyContent="flex-end" sx={{ mt: 5 }}>
+            <Button variant="contained" onClick={handleUpdateConfirmDraft}>
+              Kirim Pesanan
+            </Button>
+          </Stack>
+        )}
       </Card>
     </>
   );

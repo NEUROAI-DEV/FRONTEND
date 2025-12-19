@@ -16,6 +16,7 @@ import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
 import { useNavigate } from "react-router-dom";
 import { convertTime } from "../../utilities/convertTime";
+import { convertNumberToCurrency } from "../../utilities/convertNumberToCurrency";
 
 export default function ListOrderView() {
   const navigation = useNavigate();
@@ -40,6 +41,7 @@ export default function ListOrderView() {
       });
 
       if (result && result.items) {
+        console.log(result.items);
         const mapingData = result.items.map((item: any) => {
           return {
             ...item,
@@ -64,6 +66,12 @@ export default function ListOrderView() {
 
   const columns: GridColDef[] = [
     {
+      field: "orderReferenceId",
+      flex: 1,
+      renderHeader: () => <strong>{"ID"}</strong>,
+      editable: true,
+    },
+    {
       field: "userName",
       flex: 1,
       renderHeader: () => <strong>{"Pembeli"}</strong>,
@@ -74,6 +82,7 @@ export default function ListOrderView() {
       flex: 1,
       renderHeader: () => <strong>{"Harga"}</strong>,
       editable: true,
+      valueFormatter: (item) => `Rp ${convertNumberToCurrency(item.value)}`,
     },
     {
       field: "orderStatus",
