@@ -1,42 +1,55 @@
-import AppRouters from './routers';
+import AppRouters from "./routers";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
+import { useMemo, useState } from "react";
+import { ColorModeContext } from "./context/colorMode.context";
 
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-const theme = createTheme({
-    palette: {
-        primary: {
-            main: '#EA68B4',
-            contrastText: '#FFFFFF', // warna teks tombol
-        },
-    },
-
-    components: {
-        MuiButton: {
-            defaultProps: {
-                variant: 'contained',   // default semua tombol jadi contained pink
-                color: 'primary',       // default semua tombol pakai primary
-            },
-            styleOverrides: {
-                root: {
-                    textTransform: 'none',     // optional: biar tidak CAPS
-                    borderRadius: 12,          // optional: biar lebih lembut
-                    boxShadow: '0px 3px 8px rgba(234, 104, 180, 0.35)',
-                    '&:hover': {
-                        backgroundColor: '#d4579f', // hover lebih gelap
-                        boxShadow: '0px 4px 12px rgba(234, 104, 180, 0.45)',
-                    },
-                },
-            },
-        },
-    },
-});
+const primaryColor = "#3B82F6";
 
 function App() {
-    return (
-        <ThemeProvider theme={theme}>
-            <CssBaseline /> <AppRouters />
-        </ThemeProvider>
-    );
+  const [mode, setMode] = useState<"light" | "dark">(() => {
+    return (localStorage.getItem("themeMode") as "light" | "dark") || "light";
+  });
+
+  const colorMode = useMemo(
+    () => ({
+      toggleColorMode: () => {
+        setMode((prev) => {
+          const next = prev === "light" ? "dark" : "light";
+          localStorage.setItem("themeMode", next);
+          return next;
+        });
+      },
+    }),
+    []
+  );
+
+  const theme = useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode,
+          primary: {
+            main: primaryColor,
+            contrastText: "#fff",
+          },
+          background: {
+            default: mode === "dark" ? "#070A12" : "#FFF5FA",
+            paper: mode === "dark" ? "#0E1320" : "#FFFFFF",
+          },
+        },
+      }),
+    [mode]
+  );
+
+  return (
+    <ColorModeContext.Provider value={colorMode}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <AppRouters />
+      </ThemeProvider>
+    </ColorModeContext.Provider>
+  );
 }
 
 export default App;
