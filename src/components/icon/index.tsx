@@ -1,29 +1,27 @@
-import StorefrontIcon from '@mui/icons-material/Storefront';
-import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
-import SpaceDashboardOutlinedIcon from '@mui/icons-material/SpaceDashboardOutlined';
-import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
-import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
-import WhatsAppIcon from '@mui/icons-material/WhatsApp';
-import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
-import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
-import AddShoppingCartOutlinedIcon from '@mui/icons-material/AddShoppingCartOutlined';
-import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsActiveOutlined';
-import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
+import SpaceDashboardOutlinedIcon from "@mui/icons-material/SpaceDashboardOutlined";
+import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
+import NotificationsActiveOutlinedIcon from "@mui/icons-material/NotificationsActiveOutlined";
+import CollectionsOutlinedIcon from "@mui/icons-material/CollectionsOutlined";
+import NewspaperOutlinedIcon from "@mui/icons-material/NewspaperOutlined";
+import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
+import TokenOutlinedIcon from "@mui/icons-material/TokenOutlined";
+import BookmarkAddedOutlinedIcon from "@mui/icons-material/BookmarkAddedOutlined";
+import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
+import SupportAgentOutlinedIcon from "@mui/icons-material/SupportAgentOutlined";
 
 export const IconMenus = {
-    dashboard: SpaceDashboardOutlinedIcon,
-    products: StorefrontIcon,
-    category: CategoryOutlinedIcon,
-    customers: PeopleAltOutlinedIcon,
-    notification: NotificationsActiveOutlinedIcon,
-    orders: AddShoppingCartIcon,
-    waBlas: WhatsAppIcon,
-    admin: AdminPanelSettingsOutlinedIcon,
-    profile: PersonOutlineOutlinedIcon,
-    transaction: PaymentsOutlinedIcon,
-    settings: SettingsOutlinedIcon,
-    shoppingCart: AddShoppingCartOutlinedIcon,
-    upload: CollectionsOutlinedIcon,
+  dashboard: SpaceDashboardOutlinedIcon,
+  token: TokenOutlinedIcon,
+  news: NewspaperOutlinedIcon,
+  academy: SchoolOutlinedIcon,
+  notification: NotificationsActiveOutlinedIcon,
+  watchList: BookmarkAddedOutlinedIcon,
+  trend: TimelineOutlinedIcon,
+  admin: AdminPanelSettingsOutlinedIcon,
+  profile: PersonOutlineOutlinedIcon,
+  settings: SettingsOutlinedIcon,
+  support: SupportAgentOutlinedIcon,
+  upload: CollectionsOutlinedIcon,
 };

@@ -1,334 +1,354 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import { styled, useTheme, Theme, CSSObject } from '@mui/material/styles';
+import React, { useEffect, useState, useContext } from "react";
+import { styled, useTheme, Theme, CSSObject } from "@mui/material/styles";
 import {
-    Box,
-    Drawer as MuiDrawer,
-    AppBar as MuiAppBar,
-    AppBarProps as MuiAppBarProps,
-    Toolbar,
-    List,
-    CssBaseline,
-    Typography,
-    IconButton,
-    ListItem,
-    ListItemButton,
-    ListItemIcon,
-    ListItemText,
-    Avatar,
-    Menu,
-    MenuItem,
-    Container,
-    Tooltip,
-    Backdrop,
-    CircularProgress,
-    Snackbar,
-    Alert,
-    AlertTitle,
-    Stack,
-} from '@mui/material';
-import { ChevronLeft, ChevronRight } from '@mui/icons-material';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { blue, grey } from '@mui/material/colors';
-import { useAppContext } from '../context/app.context';
-import { useToken } from '../hooks/token';
-import { IconMenus } from '../components/icon';
-import logo from '../assets/logo.jpg';
+  Box,
+  Drawer as MuiDrawer,
+  AppBar as MuiAppBar,
+  AppBarProps as MuiAppBarProps,
+  Toolbar,
+  List,
+  CssBaseline,
+  Typography,
+  IconButton,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Avatar,
+  Menu,
+  MenuItem,
+  Container,
+  Tooltip,
+  Backdrop,
+  CircularProgress,
+  Snackbar,
+  Alert,
+  AlertTitle,
+} from "@mui/material";
+import {
+  ChevronLeft,
+  ChevronRight,
+  DarkMode,
+  LightMode,
+} from "@mui/icons-material";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 
-const drawerWidth = 240;
+import { useAppContext } from "../context/app.context";
+import { useToken } from "../hooks/token";
+import { IconMenus } from "../components/icon";
+import { ColorModeContext } from "../context/colorMode.context";
 
-/* === Drawer animation & styles === */
+/* ============================================================
+   GLOBAL DESIGN TOKENS (MODE AWARE)
+============================================================ */
+const drawerWidth = 260;
+const miniDrawerWidth = 64;
+
+const primaryBlue = "#3B82F6";
+const glowBlue = "#60A5FA";
+
+const tokens = {
+  dark: {
+    appBg:
+      "radial-gradient(1200px 600px at 10% -10%, rgba(59,130,246,0.14), transparent 40%), #070A12",
+    sidebar: "linear-gradient(180deg, #0B1220 0%, #080D17 60%, #05070C 100%)",
+    surface:
+      "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+    border: "rgba(255,255,255,0.08)",
+    hover: "rgba(255,255,255,0.06)",
+    textPrimary: "#FFFFFF",
+    textSecondary: "rgba(255,255,255,0.7)",
+  },
+
+  light: {
+    appBg: "#F5F7FB",
+    sidebar: "linear-gradient(180deg, #FFFFFF, #F1F5F9)",
+    surface: "#FFFFFF",
+    border: "rgba(0,0,0,0.08)",
+    hover: "rgba(0,0,0,0.04)",
+    textPrimary: "#0F172A",
+    textSecondary: "#475569",
+  },
+};
+
+/* ============================================================
+   DRAWER MIXINS
+============================================================ */
 const openedMixin = (theme: Theme): CSSObject => ({
-    width: drawerWidth,
-    transition: theme.transitions.create('width', {
-        easing: theme.transitions.easing.easeOut,
-        duration: theme.transitions.duration.enteringScreen,
-    }),
-    overflowX: 'hidden',
+  width: drawerWidth,
+  overflowX: "hidden",
+  transition: theme.transitions.create("width", {
+    easing: theme.transitions.easing.easeOut,
+    duration: theme.transitions.duration.enteringScreen,
+  }),
 });
 
 const closedMixin = (theme: Theme): CSSObject => ({
-    transition: theme.transitions.create('width', {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.leavingScreen,
-    }),
-    overflowX: 'hidden',
-    width: `calc(${theme.spacing(7)} + 1px)`,
-    [theme.breakpoints.up('sm')]: {
-        width: `calc(${theme.spacing(8)} + 1px)`,
-    },
+  width: miniDrawerWidth,
+  overflowX: "hidden",
+  transition: theme.transitions.create("width", {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
 });
 
-const DrawerHeader = styled('div')(({ theme }) => ({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    padding: theme.spacing(0, 1),
-    ...theme.mixins.toolbar,
-}));
-
+/* ============================================================
+   STYLED COMPONENTS
+============================================================ */
 interface AppBarProps extends MuiAppBarProps {
-    open?: boolean;
+  open?: boolean;
 }
 
 const AppBar = styled(MuiAppBar, {
-    shouldForwardProp: (prop) => prop !== 'open',
-})<AppBarProps>(({ theme, open }) => ({
-    backdropFilter: 'blur(12px)',
-    background: 'rgba(255, 255, 255, 0.7)',
-    color: grey[800],
-    borderBottom: '1px solid rgba(0,0,0,0.05)',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-    transition: theme.transitions.create(['width', 'margin'], {
-        easing: theme.transitions.easing.easeOut,
-        duration: theme.transitions.duration.standard,
-    }),
-    ...(open && {
-        marginLeft: drawerWidth,
-        width: `calc(100% - ${drawerWidth}px)`,
-    }),
-}));
+  shouldForwardProp: (prop) => prop !== "open",
+})<AppBarProps>(({ theme, open }) => {
+  const t = tokens[theme.palette.mode];
+
+  return {
+    zIndex: theme.zIndex.drawer + 1,
+    background:
+      theme.palette.mode === "dark"
+        ? "linear-gradient(180deg, rgba(10,14,24,0.75), rgba(10,14,24,0.55))"
+        : "rgba(255,255,255,0.85)",
+    backdropFilter: "blur(18px)",
+    borderBottom: `1px solid ${t.border}`,
+    boxShadow:
+      theme.palette.mode === "dark"
+        ? "0 10px 40px rgba(0,0,0,0.6)"
+        : "0 8px 24px rgba(0,0,0,0.08)",
+    marginLeft: open ? drawerWidth : miniDrawerWidth,
+    width: `calc(100% - ${open ? drawerWidth : miniDrawerWidth}px)`,
+    transition: theme.transitions.create(["width", "margin"]),
+  };
+});
 
 const Drawer = styled(MuiDrawer, {
-    shouldForwardProp: (prop) => prop !== 'open',
-})(({ theme, open }) => ({
-    zIndex: theme.zIndex.drawer + 1,
+  shouldForwardProp: (prop) => prop !== "open",
+})<{ open?: boolean }>(({ theme, open }) => {
+  const t = tokens[theme.palette.mode];
 
+  return {
     width: drawerWidth,
     flexShrink: 0,
-    whiteSpace: 'nowrap',
-    boxSizing: 'border-box',
-    ...(open && {
-        ...openedMixin(theme),
-        '& .MuiDrawer-paper': {
-            ...openedMixin(theme),
-            background: `linear-gradient(180deg, ${blue[700]} 0%, ${blue[600]} 100%)`,
-            color: '#fff',
-            borderRight: 'none',
-            boxShadow: '4px 0 20px rgba(0,0,0,0.1)',
-        },
-    }),
-    ...(!open && {
-        ...closedMixin(theme),
-        '& .MuiDrawer-paper': {
-            ...closedMixin(theme),
-            background: `linear-gradient(180deg, ${blue[700]} 0%, ${blue[600]} 100%)`,
-            color: '#fff',
-            borderRight: 'none',
-            boxShadow: '4px 0 20px rgba(0,0,0,0.05)',
-        },
-    }),
+    whiteSpace: "nowrap",
+    ...(open ? openedMixin(theme) : closedMixin(theme)),
+
+    "& .MuiDrawer-paper": {
+      background: t.sidebar,
+      color: t.textSecondary,
+      //   borderRight: `1px solid ${t.border}`,
+      ...(open ? openedMixin(theme) : closedMixin(theme)),
+    },
+  };
+});
+
+const DrawerHeader = styled("div")(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "flex-end",
+  padding: theme.spacing(0, 1),
+  ...theme.mixins.toolbar,
 }));
 
+/* ============================================================
+   MAIN COMPONENT
+============================================================ */
 export default function AppLayout() {
-    const theme = useTheme();
-    const [openDrawer, setOpenDrawer] = useState(true);
-    const { appAlert, setAppAlert, isLoading, setIsLoading } = useAppContext();
-    const { removeToken } = useToken();
-    const navigate = useNavigate();
-    const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
-    const [activeLink, setActiveLink] = useState('/');
+  const theme = useTheme();
+  const navigate = useNavigate();
 
-    const menuItems = [
-        { title: 'Dashboard', link: '/', icon: <IconMenus.dashboard /> },
-        { title: 'Products', link: '/products', icon: <IconMenus.products /> },
-        { title: 'Category', link: '/categories', icon: <IconMenus.category /> },
-        { title: 'Uploads', link: '/uploads', icon: <IconMenus.upload /> },
-        { title: 'Customers', link: '/customers', icon: <IconMenus.customers /> },
-        { title: 'Orders', link: '/orders', icon: <IconMenus.orders /> },
-        { title: 'Transactions', link: '/transactions', icon: <IconMenus.transaction /> },
-        { title: 'Profile', link: '/my-profile', icon: <IconMenus.profile /> },
-    ];
+  const { toggleColorMode } = useContext(ColorModeContext);
+  const { appAlert, setAppAlert, isLoading } = useAppContext();
+  const { removeToken } = useToken();
 
-    const handleDrawer = () => setOpenDrawer(!openDrawer);
-    const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) =>
-        setAnchorElUser(event.currentTarget);
-    const handleCloseUserMenu = () => setAnchorElUser(null);
+  const [openDrawer, setOpenDrawer] = useState(true);
+  const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
+  const [activeLink, setActiveLink] = useState("/");
 
-    useEffect(() => {
-        const savedLink = localStorage.getItem('activeSidebarLink');
-        if (savedLink) setActiveLink(savedLink);
-    }, []);
+  const menuItems = [
+    { title: "Dashboard", link: "/", icon: <IconMenus.dashboard /> },
+    {
+      title: "Token Screener",
+      link: "/tokens",
+      icon: <IconMenus.token />,
+    },
+    { title: "Watchlist", link: "/products", icon: <IconMenus.watchList /> },
+    { title: "News", link: "/categories", icon: <IconMenus.news /> },
+    {
+      title: "Markert Trends",
+      link: "/customers",
+      icon: <IconMenus.trend />,
+    },
+    { title: "Academy", link: "/orders", icon: <IconMenus.academy /> },
+    {
+      title: "Support",
+      link: "/transactions",
+      icon: <IconMenus.support />,
+    },
+    { title: "Profile", link: "/my-profile", icon: <IconMenus.profile /> },
+  ];
 
-    return (
-        <Box sx={{ display: 'flex', bgcolor: grey[50], minHeight: '100vh' }}>
-            <CssBaseline />
+  useEffect(() => {
+    const saved = localStorage.getItem("activeSidebarLink");
+    if (saved) setActiveLink(saved);
+  }, []);
 
-            {/* === APP BAR === */}
-            <AppBar position="fixed" open={openDrawer}>
-                <Container maxWidth="xl">
-                    <Toolbar
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            minHeight: 64,
-                        }}
-                    >
-                        {/* LOGO + TITLE */}
-                        <Box sx={{ display: 'flex', alignItems: 'center', ml: openDrawer ? 0 : 5 }}>
-                            <img src={logo} width={40} height={40} style={{ borderRadius: 8 }} />
-                            <Typography
-                                variant="h6"
-                                noWrap
-                                sx={{
-                                    ml: 1.5,
-                                    fontWeight: 700,
-                                    letterSpacing: '.1rem',
-                                    color: blue[800],
-                                }}
-                            >
-                                FRESH
-                            </Typography>
-                        </Box>
+  const t = tokens[theme.palette.mode];
 
-                        <Box sx={{ flexGrow: 1 }} />
+  return (
+    <Box sx={{ display: "flex", minHeight: "100vh", background: t.appBg }}>
+      <CssBaseline />
 
-                        {/* USER MENU */}
-                        <Tooltip title="Account settings">
-                            <IconButton onClick={handleOpenUserMenu}>
-                                <Avatar alt="User" src="/static/images/avatar/2.jpg" />
-                            </IconButton>
-                        </Tooltip>
+      {/* ================= APP BAR ================= */}
+      <AppBar position="fixed" open={openDrawer}>
+        <Container maxWidth="xl">
+          <Toolbar sx={{ minHeight: 68 }}>
+            <Typography
+              sx={{
+                fontWeight: 800,
+                letterSpacing: ".12em",
+                background: `linear-gradient(90deg, ${primaryBlue}, ${glowBlue})`,
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              NEURO AI
+            </Typography>
 
-                        <Menu
-                            sx={{ mt: '45px' }}
-                            anchorEl={anchorElUser}
-                            open={Boolean(anchorElUser)}
-                            onClose={handleCloseUserMenu}
-                        >
-                            <MenuItem
-                                onClick={() => {
-                                    handleCloseUserMenu();
-                                    navigate('/my-profile');
-                                }}
-                            >
-                                Profile
-                            </MenuItem>
-                            <MenuItem
-                                onClick={() => {
-                                    handleCloseUserMenu();
-                                    removeToken();
-                                    navigate('/');
-                                    window.location.reload();
-                                }}
-                            >
-                                Logout
-                            </MenuItem>
-                        </Menu>
-                    </Toolbar>
-                </Container>
-            </AppBar>
+            <Box sx={{ flexGrow: 1 }} />
 
-            {/* === SIDEBAR === */}
-            <Drawer variant="permanent" open={openDrawer}>
-                <DrawerHeader>
-                    <IconButton onClick={handleDrawer} sx={{ color: 'white' }}>
-                        {theme.direction === 'rtl' || openDrawer ? (
-                            <ChevronLeft />
-                        ) : (
-                            <ChevronRight />
-                        )}
-                    </IconButton>
-                </DrawerHeader>
+            <IconButton onClick={toggleColorMode}>
+              {theme.palette.mode === "dark" ? <LightMode /> : <DarkMode />}
+            </IconButton>
 
-                <List>
-                    {menuItems.map((item) => (
-                        <ListItem
-                            key={item.link}
-                            disablePadding
-                            sx={{
-                                mx: 1,
-                                mb: 0.5,
-                                borderRadius: 2,
-                                backgroundColor:
-                                    activeLink === item.link
-                                        ? 'rgba(255,255,255,0.15)'
-                                        : 'transparent',
-                                transition: 'all 0.25s ease',
-                                '&:hover': {
-                                    backgroundColor: 'rgba(255,255,255,0.25)',
-                                    transform: 'translateX(4px)',
-                                },
-                            }}
-                            onClick={() => {
-                                setActiveLink(item.link);
-                                localStorage.setItem('activeSidebarLink', item.link);
-                            }}
-                        >
-                            <Link
-                                to={item.link}
-                                style={{ textDecoration: 'none', color: 'inherit' }}
-                            >
-                                <ListItemButton
-                                    sx={{
-                                        minHeight: 46,
-                                        justifyContent: openDrawer ? 'initial' : 'center',
-                                        px: 2.5,
-                                    }}
-                                >
-                                    <ListItemIcon
-                                        sx={{
-                                            minWidth: 0,
-                                            mr: openDrawer ? 2.5 : 'auto',
-                                            justifyContent: 'center',
-                                            color: '#fff',
-                                            opacity: activeLink === item.link ? 1 : 0.8,
-                                        }}
-                                    >
-                                        {item.icon}
-                                    </ListItemIcon>
-                                    <ListItemText
-                                        primary={item.title}
-                                        sx={{
-                                            opacity: openDrawer ? 1 : 0,
-                                            fontWeight: activeLink === item.link ? 600 : 400,
-                                        }}
-                                    />
-                                </ListItemButton>
-                            </Link>
-                        </ListItem>
-                    ))}
-                </List>
-            </Drawer>
+            <Tooltip title="Account">
+              <IconButton onClick={(e) => setAnchorElUser(e.currentTarget)}>
+                <Avatar
+                  sx={{
+                    width: 34,
+                    height: 34,
+                    bgcolor: primaryBlue,
+                    boxShadow: `0 0 0 4px rgba(59,130,246,0.25)`,
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
 
-            {/* === MAIN CONTENT === */}
-            <Box component="main" sx={{ flexGrow: 1, p: 4 }}>
-                <DrawerHeader />
-                {isLoading ? (
-                    <Backdrop
-                        sx={{
-                            color: '#fff',
-                            zIndex: (theme) => theme.zIndex.drawer + 1,
-                            backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                        }}
-                        open={isLoading}
-                        onClick={() => setIsLoading(false)}
-                    >
-                        <CircularProgress color="inherit" />
-                    </Backdrop>
-                ) : (
-                    <Outlet />
-                )}
-                <Stack direction="row" justifyContent="flex-end">
-                    <Snackbar
-                        open={appAlert.isDisplayAlert}
-                        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                        autoHideDuration={4000}
-                        onClose={() =>
-                            setAppAlert({
-                                isDisplayAlert: false,
-                                message: '',
-                                alertType: undefined,
-                            })
-                        }
-                    >
-                        <Alert severity={appAlert.alertType}>
-                            <AlertTitle>{appAlert.alertType?.toUpperCase()}</AlertTitle>
-                            {appAlert.message}
-                        </Alert>
-                    </Snackbar>
-                </Stack>
-            </Box>
+            <Menu
+              anchorEl={anchorElUser}
+              open={Boolean(anchorElUser)}
+              onClose={() => setAnchorElUser(null)}
+            >
+              <MenuItem onClick={() => navigate("/my-profile")}>
+                Profile
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  removeToken();
+                  navigate("/");
+                  window.location.reload();
+                }}
+              >
+                Logout
+              </MenuItem>
+            </Menu>
+          </Toolbar>
+        </Container>
+      </AppBar>
+
+      {/* ================= SIDEBAR ================= */}
+      <Drawer variant="permanent" open={openDrawer}>
+        <DrawerHeader>
+          <IconButton onClick={() => setOpenDrawer(!openDrawer)}>
+            {openDrawer ? <ChevronLeft /> : <ChevronRight />}
+          </IconButton>
+        </DrawerHeader>
+
+        <List sx={{ px: 1 }}>
+          {menuItems.map((item) => {
+            const active = activeLink === item.link;
+
+            return (
+              <ListItem
+                key={item.link}
+                disablePadding
+                sx={{
+                  mb: 0.8,
+                  borderRadius: 2,
+                  background: active ? "rgba(59,130,246,0.16)" : "transparent",
+                  "&:hover": { background: t.hover },
+                }}
+                onClick={() => {
+                  setActiveLink(item.link);
+                  localStorage.setItem("activeSidebarLink", item.link);
+                }}
+              >
+                <ListItemButton component={Link} to={item.link}>
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 38,
+                      color: active ? primaryBlue : t.textSecondary,
+                    }}
+                  >
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.title}
+                    sx={{
+                      opacity: openDrawer ? 1 : 0,
+                      fontWeight: active ? 700 : 500,
+                      color: active ? t.textPrimary : t.textSecondary,
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            );
+          })}
+        </List>
+      </Drawer>
+
+      {/* ================= MAIN ================= */}
+      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+        <DrawerHeader />
+
+        <Box
+          sx={{
+            background: t.surface,
+            borderRadius: 4,
+            p: 3,
+            minHeight: "calc(100vh - 110px)",
+            boxShadow:
+              theme.palette.mode === "dark"
+                ? "0 40px 120px rgba(0,0,0,0.6)"
+                : "0 24px 60px rgba(0,0,0,0.12)",
+          }}
+        >
+          {isLoading ? (
+            <Backdrop open sx={{ color: "#fff" }}>
+              <CircularProgress />
+            </Backdrop>
+          ) : (
+            <Outlet />
+          )}
         </Box>
-    );
+
+        <Snackbar
+          open={appAlert?.isDisplayAlert}
+          autoHideDuration={4000}
+          onClose={() =>
+            setAppAlert({
+              isDisplayAlert: false,
+              alertType: undefined,
+              message: "",
+            })
+          }
+        >
+          <Alert severity={appAlert?.alertType}>
+            <AlertTitle>{appAlert?.alertType}</AlertTitle>
+            {appAlert?.message}
+          </Alert>
+        </Snackbar>
+      </Box>
+    </Box>
+  );
 }
