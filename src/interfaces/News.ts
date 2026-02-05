@@ -7,5 +7,7 @@ export interface INews {
   newsPublishedAt: string;
   newsCreatedAt: string;
   newsKind: string;
-  newsSentiment: "positive" | "negative";
+  newsSentimentConfidence?: number;
+  newsSentiment?: "POSITIVE" | "NEGATIVE" | "NEUTRAL";
+  newsSentimentReason: string;
 }

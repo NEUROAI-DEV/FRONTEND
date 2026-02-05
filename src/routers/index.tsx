@@ -5,9 +5,9 @@ import DashboardView from "../pages/dashboard/dashboardView";
 import LoginView from "../pages/auth/Login";
 import ProfileView from "../pages/myProfile/Index";
 import AuthLayout from "../layouts/AuthLayout";
-import ListTokenScreenerView from "../pages/tokenScreener/ListTokenScreenerView";
 import { useToken } from "../hooks/token";
 import ListNewsView from "../pages/news/ListNewsView";
+import ListTopSignalsView from "../pages/topSignal/ListTopSignalView";
 
 export default function AppRouters() {
   const routers: { path: string; element: JSX.Element }[] = [];
@@ -22,44 +22,32 @@ export default function AppRouters() {
     },
   ];
 
-  const mainRouters: { path: string; element: JSX.Element }[] = [];
+  const mainRouters: { path: string; element: JSX.Element }[] = [
+    {
+      path: "/",
+      element: <DashboardView />,
+    },
 
-  const currentUser = "superAdmin";
+    {
+      path: "/top-signals",
+      element: <ListTopSignalsView />,
+    },
 
-  switch (currentUser) {
-    case "superAdmin":
-      mainRouters.push(
-        ...[
-          {
-            path: "/",
-            element: <DashboardView />,
-          },
+    {
+      path: "/news",
+      element: <ListNewsView />,
+    },
 
-          {
-            path: "/tokens",
-            element: <ListTokenScreenerView />,
-          },
-
-           {
-            path: "/news",
-            element: <ListNewsView />,
-          },
-
-          //my profile routers
-          {
-            path: "/my-profile",
-            element: <ProfileView />,
-          },
-          {
-            path: "/my-profile/edit/:userId",
-            element: <ProfileView />,
-          },
-        ]
-      );
-      break;
-    default:
-      break;
-  }
+    //my profile routers
+    {
+      path: "/my-profile",
+      element: <ProfileView />,
+    },
+    {
+      path: "/my-profile/edit/:userId",
+      element: <ProfileView />,
+    },
+  ];
 
   const { getToken } = useToken();
 

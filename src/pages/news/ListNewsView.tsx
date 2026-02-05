@@ -16,7 +16,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 export default function ListAttendanceView() {
   const [tableData, setTableData] = useState([]);
   const { handleGetTableDataRequest } = useHttp();
-  const navigation = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [loading, setLoading] = useState(false);
@@ -44,7 +43,7 @@ export default function ListAttendanceView() {
         filter: { search, startDate, endDate },
       });
 
-      console.log(result)
+      console.log(result);
 
       if (result && result?.items) {
         setTableData(result?.items);
@@ -71,51 +70,29 @@ export default function ListAttendanceView() {
 
   const columns: GridColDef[] = [
     {
-      field: "userName",
+      field: "newsTitle",
       flex: 1,
-      renderHeader: () => <strong>{"EMPLOYEE"}</strong>,
-      valueGetter: (params) => params.row?.user?.userName || "_",
+      renderHeader: () => <strong>{"TITLE"}</strong>,
+      valueGetter: (params) => params.row?.newsTitle || "_",
       editable: true,
     },
     {
-      field: "officeName",
+      field: "newsDescription",
       flex: 1,
-      renderHeader: () => <strong>{"OFFICE"}</strong>,
-      valueGetter: (params) => params.row?.office?.officeName || "_",
+      renderHeader: () => <strong>{"DESCRIPTION"}</strong>,
+      valueGetter: (params) => params.row?.newsDescription || "_",
       editable: true,
     },
     {
-      field: "scheduleStartDate",
-      renderHeader: () => <strong>{"START"}</strong>,
+      field: "newsPublishedAt",
+      renderHeader: () => <strong>{"PUBLISHED AT"}</strong>,
       flex: 1,
       editable: true,
-      valueGetter: (params) =>
-        convertTime(params.row?.schedule?.scheduleStartDate) || "_",
+      valueGetter: (params) => convertTime(params.row?.newsPublishedAt) || "_",
     },
     {
-      field: "scheduleEndDate",
-      renderHeader: () => <strong>{"END"}</strong>,
-      flex: 1,
-      editable: true,
-      valueGetter: (params) =>
-        convertTime(params.row?.schedule?.scheduleEndDate) || "_",
-    },
-    {
-      field: "attendanceTime",
-      flex: 1,
-      renderHeader: () => <strong>{"TIME"}</strong>,
-      valueGetter: (params) => params.value?.split(" ")[1] || "_",
-      editable: true,
-    },
-    {
-      field: "attendanceDistanceFromOffice",
-      flex: 1,
-      renderHeader: () => <strong>{"DISTANCE (M)"}</strong>,
-      valueGetter: (params) => `${params.value}` || "_",
-    },
-    {
-      field: "attendanceCategory",
-      renderHeader: () => <strong>{"CATEGORY"}</strong>,
+      field: "newsSentiment",
+      renderHeader: () => <strong>{"SENTIMENT"}</strong>,
       flex: 1,
       editable: true,
       renderCell: (params) => {
@@ -123,23 +100,14 @@ export default function ListAttendanceView() {
         let color: "default" | "primary" | "success" | "warning" | "error" =
           "default";
         switch (status) {
-          case "checkin":
+          case "NEGATIVE":
             color = "error";
             break;
-          case "checkout":
+          case "POSITIVE":
             color = "primary";
             break;
-          case "breakin":
-            color = "error";
-            break;
-          case "breakout":
-            color = "primary";
-            break;
-          case "otin":
-            color = "error";
-            break;
-          case "otout":
-            color = "primary";
+          case "NEUTRAL":
+            color = "success";
             break;
           default:
             color = "default";
@@ -158,17 +126,10 @@ export default function ListAttendanceView() {
     {
       field: "actions",
       type: "actions",
-      renderHeader: () => <strong>{"HISTORY"}</strong>,
-      flex: 1,
+      renderHeader: () => <strong>{"DETAIL"}</strong>,
       cellClassName: "actions",
       getActions: ({ row }) => {
-        return [
-          <Chip
-            label={"Detail"}
-            color={"success"}
-            variant="outlined"
-          />,
-        ];
+        return [<Chip label={"Detail"} color={"success"} variant="outlined" />];
       },
     },
   ];
@@ -221,7 +182,7 @@ export default function ListAttendanceView() {
           />
           <TextField
             size="small"
-            placeholder="employee name..."
+            placeholder="search news..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -248,7 +209,7 @@ export default function ListAttendanceView() {
         <DataGrid
           rows={tableData}
           columns={columns}
-          getRowId={(row: any) => row?.attendanceId}
+          getRowId={(row) => row?.newsId}
           editMode="row"
           autoHeight
           sx={{ padding: 2 }}

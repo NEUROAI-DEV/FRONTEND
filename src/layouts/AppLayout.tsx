@@ -169,13 +169,12 @@ export default function AppLayout() {
 
    const {  getCredential } = useCredential();
   
-  const userCredential = getCredential();
 
   const menuItems = [
     { title: "Dashboard", link: "/", icon: <IconMenus.dashboard /> },
     {
-      title: "Token Screener",
-      link: "/tokens",
+      title: "Top Signals",
+      link: "/top-signals",
       icon: <IconMenus.token />,
     },
     { title: "Watchlist", link: "/products", icon: <IconMenus.watchList /> },
