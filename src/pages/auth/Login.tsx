@@ -4,7 +4,6 @@ import {
   Card,
   Typography,
   Container,
-  Box,
   TextField,
   Divider,
   Stack,
@@ -20,25 +19,26 @@ export default function LoginView() {
   const { setToken } = useToken();
   const navigate = useNavigate();
 
-  const [userWhatsAppNumber, setUserWhatsAppNumber] = useState("");
+  const [userEmail, setUserEmail] = useState("");
   const [userPassword, setUserPassword] = useState("");
 
   const handleSubmit = async () => {
     try {
       const payload: IUserLoginRequestModel = {
-        userWhatsAppNumber,
+        userEmail,
         userPassword,
       };
 
       const result = await handlePostRequest({
-        path: "/admins/login",
+        path: "/auth/login/users",
         body: payload,
       });
 
       if (result) {
-        setToken(result.data.token);
+        setToken(result.data.accessToken);
+
+        console.log(result.data.accessToken)
         window.location.reload();
-        navigate("/");
       }
     } catch (error) {
       console.log(error);
@@ -80,11 +80,11 @@ export default function LoginView() {
         {/* Form */}
         <Stack spacing={2}>
           <TextField
-            label="WhatsApp Number"
-            value={userWhatsAppNumber}
+            label="E-mail"
+            value={userEmail}
             size="medium"
             fullWidth
-            onChange={(e) => setUserWhatsAppNumber(e.target.value)}
+            onChange={(e) => setUserEmail(e.target.value)}
           />
 
           <TextField

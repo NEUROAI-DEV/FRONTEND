@@ -6,7 +6,8 @@ import LoginView from "../pages/auth/Login";
 import ProfileView from "../pages/myProfile/Index";
 import AuthLayout from "../layouts/AuthLayout";
 import ListTokenScreenerView from "../pages/tokenScreener/ListTokenScreenerView";
-// import { useToken } from "../hooks/token";
+import { useToken } from "../hooks/token";
+import ListNewsView from "../pages/news/ListNewsView";
 
 export default function AppRouters() {
   const routers: { path: string; element: JSX.Element }[] = [];
@@ -39,6 +40,11 @@ export default function AppRouters() {
             element: <ListTokenScreenerView />,
           },
 
+           {
+            path: "/news",
+            element: <ListNewsView />,
+          },
+
           //my profile routers
           {
             path: "/my-profile",
@@ -55,11 +61,9 @@ export default function AppRouters() {
       break;
   }
 
-  //   const { getToken } = useToken();
+  const { getToken } = useToken();
 
-  //   const isAuth = getToken();
-
-  const isAuth = true;
+  const isAuth = getToken();
 
   if (isAuth) {
     routers.push(...mainRouters);
