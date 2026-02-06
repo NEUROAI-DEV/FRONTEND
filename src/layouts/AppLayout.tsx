@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext } from "react";
 import { styled, useTheme, Theme, CSSObject } from "@mui/material/styles";
 import {
   Box,
@@ -24,6 +24,7 @@ import {
   Snackbar,
   Alert,
   AlertTitle,
+  useMediaQuery,
 } from "@mui/material";
 import {
   ChevronLeft,
@@ -31,14 +32,13 @@ import {
   DarkMode,
   LightMode,
 } from "@mui/icons-material";
+import MenuIcon from "@mui/icons-material/Menu";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 
 import { useAppContext } from "../context/app.context";
 import { useToken } from "../hooks/token";
 import { IconMenus } from "../components/icon";
 import { ColorModeContext } from "../context/colorMode.context";
-
-import { useCredential } from "../hooks/credential";
 
 /* ============================================================
    GLOBAL DESIGN TOKENS (MODE AWARE)
@@ -121,12 +121,14 @@ const AppBar = styled(MuiAppBar, {
     marginLeft: open ? drawerWidth : miniDrawerWidth,
     width: `calc(100% - ${open ? drawerWidth : miniDrawerWidth}px)`,
     transition: theme.transitions.create(["width", "margin"]),
+    [theme.breakpoints.down("md")]: {
+      marginLeft: 0,
+      width: "100%",
+    },
   };
 });
 
-const Drawer = styled(MuiDrawer, {
-  shouldForwardProp: (prop) => prop !== "open",
-})<{ open?: boolean }>(({ theme, open }) => {
+const Drawer = styled(MuiDrawer)<{ open?: boolean }>(({ theme, open }) => {
   const t = tokens[theme.palette.mode];
 
   return {
@@ -157,6 +159,7 @@ const DrawerHeader = styled("div")(({ theme }) => ({
 ============================================================ */
 export default function AppLayout() {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const navigate = useNavigate();
 
   const { toggleColorMode } = useContext(ColorModeContext);
@@ -164,11 +167,11 @@ export default function AppLayout() {
   const { removeToken } = useToken();
 
   const [openDrawer, setOpenDrawer] = useState(true);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
   const [activeLink, setActiveLink] = useState("/");
 
-   const {  getCredential } = useCredential();
-  
+  // const { getCredential } = useCredential();
 
   const menuItems = [
     { title: "Dashboard", link: "/", icon: <IconMenus.dashboard /> },
@@ -214,7 +217,6 @@ export default function AppLayout() {
   //   console.error("token doesn't exist or invalid");
   // }
 
-
   useEffect(() => {
     const saved = localStorage.getItem("activeSidebarLink");
     if (saved) setActiveLink(saved);
@@ -227,20 +229,32 @@ export default function AppLayout() {
       <CssBaseline />
 
       {/* ================= APP BAR ================= */}
-      <AppBar position="fixed" open={openDrawer}>
+      <AppBar position="fixed" open={openDrawer && !isMobile}>
         <Container maxWidth="xl">
           <Toolbar sx={{ minHeight: 68 }}>
-            <Typography
-              sx={{
-                fontWeight: 800,
-                letterSpacing: ".12em",
-                background: `linear-gradient(90deg, ${primaryBlue}, ${glowBlue})`,
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-            >
-              NEURO AI
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {isMobile && (
+                <IconButton
+                  edge="start"
+                  onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
+                  sx={{ mr: 1 }}
+                >
+                  <MenuIcon />
+                </IconButton>
+              )}
+              <Typography
+                sx={{
+                  fontWeight: 800,
+                  letterSpacing: ".12em",
+                  background: `linear-gradient(90deg, ${primaryBlue}, ${glowBlue})`,
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  fontSize: { xs: 14, sm: 16 },
+                }}
+              >
+                NEURO AI
+              </Typography>
+            </Box>
 
             <Box sx={{ flexGrow: 1 }} />
 
@@ -284,11 +298,28 @@ export default function AppLayout() {
       </AppBar>
 
       {/* ================= SIDEBAR ================= */}
-      <Drawer variant="permanent" open={openDrawer}>
+      <Drawer
+        variant={isMobile ? "temporary" : "permanent"}
+        open={isMobile ? mobileDrawerOpen : openDrawer}
+        onClose={isMobile ? () => setMobileDrawerOpen(false) : undefined}
+        ModalProps={
+          isMobile
+            ? {
+                keepMounted: true,
+              }
+            : undefined
+        }
+      >
         <DrawerHeader>
-          <IconButton onClick={() => setOpenDrawer(!openDrawer)}>
-            {openDrawer ? <ChevronLeft /> : <ChevronRight />}
-          </IconButton>
+          {isMobile ? (
+            <IconButton onClick={() => setMobileDrawerOpen(false)}>
+              <ChevronLeft />
+            </IconButton>
+          ) : (
+            <IconButton onClick={() => setOpenDrawer(!openDrawer)}>
+              {openDrawer ? <ChevronLeft /> : <ChevronRight />}
+            </IconButton>
+          )}
         </DrawerHeader>
 
         <List sx={{ px: 1 }}>
@@ -308,6 +339,7 @@ export default function AppLayout() {
                 onClick={() => {
                   setActiveLink(item.link);
                   localStorage.setItem("activeSidebarLink", item.link);
+                  if (isMobile) setMobileDrawerOpen(!mobileDrawerOpen);
                 }}
               >
                 <ListItemButton component={Link} to={item.link}>
@@ -322,7 +354,7 @@ export default function AppLayout() {
                   <ListItemText
                     primary={item.title}
                     sx={{
-                      opacity: openDrawer ? 1 : 0,
+                      // opacity: !isMobile && openDrawer ? 1 : 0,
                       fontWeight: active ? 700 : 500,
                       color: active ? t.textPrimary : t.textSecondary,
                     }}
@@ -335,19 +367,28 @@ export default function AppLayout() {
       </Drawer>
 
       {/* ================= MAIN ================= */}
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: { xs: 2, sm: 2.5, md: 3 },
+        }}
+      >
         <DrawerHeader />
 
         <Box
           sx={{
             background: t.surface,
-            borderRadius: 4,
-            p: 3,
-            minHeight: "calc(100vh - 110px)",
+            borderRadius: { xs: 2, md: 4 },
+            p: { xs: 2, sm: 2.5, md: 3 },
+            minHeight: {
+              xs: "calc(100vh - 96px)",
+              md: "calc(100vh - 110px)",
+            },
             boxShadow:
               theme.palette.mode === "dark"
-                ? "0 40px 120px rgba(0,0,0,0.6)"
-                : "0 24px 60px rgba(0,0,0,0.12)",
+                ? "0 28px 80px rgba(0,0,0,0.65)"
+                : "0 18px 40px rgba(15,23,42,0.12)",
           }}
         >
           {isLoading ? (
