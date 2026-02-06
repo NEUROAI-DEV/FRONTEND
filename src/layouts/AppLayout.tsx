@@ -39,6 +39,7 @@ import { useAppContext } from "../context/app.context";
 import { useToken } from "../hooks/token";
 import { IconMenus } from "../components/icon";
 import { ColorModeContext } from "../context/colorMode.context";
+import { ChatWidget } from "../components/chat/ChatWidget";
 
 /* ============================================================
    GLOBAL DESIGN TOKENS (MODE AWARE)
@@ -354,7 +355,6 @@ export default function AppLayout() {
                   <ListItemText
                     primary={item.title}
                     sx={{
-                      // opacity: !isMobile && openDrawer ? 1 : 0,
                       fontWeight: active ? 700 : 500,
                       color: active ? t.textPrimary : t.textSecondary,
                     }}
@@ -417,6 +417,7 @@ export default function AppLayout() {
           </Alert>
         </Snackbar>
       </Box>
+      <ChatWidget />
     </Box>
   );
 }
