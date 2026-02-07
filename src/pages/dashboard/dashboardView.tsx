@@ -13,7 +13,6 @@ import ReactApexChart from "react-apexcharts";
 import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
 import { useNavigate } from "react-router-dom";
-import ListTokenScreenerView from "../tokenScreener/ListTokenScreenerView";
 
 const DashboardView = () => {
   const theme = useTheme();
@@ -223,9 +222,6 @@ const DashboardView = () => {
               </Box>
             ))}
           </Card>
-        </Grid>
-        <Grid item xs={12}>
-          <ListTokenScreenerView />
         </Grid>
       </Grid>
     </>

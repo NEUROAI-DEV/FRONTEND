@@ -8,6 +8,7 @@ import AuthLayout from "../layouts/AuthLayout";
 import { useToken } from "../hooks/token";
 import ListNewsView from "../pages/news/ListNewsView";
 import ListTopSignalsView from "../pages/topSignal/ListTopSignalView";
+import ListScreenerView from "../pages/screener/ListScreenerView";
 
 export default function AppRouters() {
   const routers: { path: string; element: JSX.Element }[] = [];
@@ -31,6 +32,11 @@ export default function AppRouters() {
     {
       path: "/top-signals",
       element: <ListTopSignalsView />,
+    },
+
+    {
+      path: "/screeners",
+      element: <ListScreenerView />,
     },
 
     {

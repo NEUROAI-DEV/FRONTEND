@@ -181,13 +181,18 @@ export default function AppLayout() {
       link: "/top-signals",
       icon: <IconMenus.token />,
     },
-    { title: "Watchlist", link: "/products", icon: <IconMenus.watchList /> },
-    { title: "News", link: "/news", icon: <IconMenus.news /> },
+    // { title: "Watchlist", link: "/products", icon: <IconMenus.watchList /> },
     {
-      title: "Markert Trends",
-      link: "/customers",
+      title: "Screeners",
+      link: "/screeners",
       icon: <IconMenus.trend />,
     },
+    { title: "News", link: "/news", icon: <IconMenus.news /> },
+    // {
+    //   title: "Markert Trends",
+    //   link: "/customers",
+    //   icon: <IconMenus.trend />,
+    // },
     { title: "Academy", link: "/orders", icon: <IconMenus.academy /> },
     {
       title: "Support",
@@ -355,6 +360,7 @@ export default function AppLayout() {
                   <ListItemText
                     primary={item.title}
                     sx={{
+                      // opacity: !isMobile && openDrawer ? 1 : 0,
                       fontWeight: active ? 700 : 500,
                       color: active ? t.textPrimary : t.textSecondary,
                     }}

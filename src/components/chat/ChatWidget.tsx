@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState, KeyboardEvent } from "react";
 import {
   Avatar,
   Box,
@@ -30,6 +30,7 @@ export function ChatWidget() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const handleToggle = () => {
     setOpen((prev) => !prev);
@@ -58,7 +59,8 @@ export function ChatWidget() {
       });
 
       const replyText =
-        (res && (res.data?.reply || res.data?.message || res.data?.content)) ??
+        (res &&
+          (res.data?.reply || res.data?.message || res.data?.content)) ??
         "Terima kasih, pesan Anda sudah diterima.";
 
       const botMessage: ChatMessage = {
@@ -73,12 +75,22 @@ export function ChatWidget() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
+
+  useEffect(() => {
+    if (!open) return;
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    }
+  }, [messages, open]);
 
   return (
     <Box
@@ -171,9 +183,7 @@ export function ChatWidget() {
                           bgcolor: isUser
                             ? "primary.main"
                             : "rgba(148, 163, 184, 0.18)",
-                          color: isUser
-                            ? "primary.contrastText"
-                            : "text.primary",
+                          color: isUser ? "primary.contrastText" : "text.primary",
                           fontSize: 13,
                           whiteSpace: "pre-wrap",
                         }}
@@ -183,6 +193,7 @@ export function ChatWidget() {
                     </Stack>
                   );
                 })}
+                <div ref={messagesEndRef} />
               </Stack>
             )}
           </Box>
@@ -216,26 +227,25 @@ export function ChatWidget() {
         </Paper>
       )}
 
-      {!open && (
-        <Tooltip title={open ? "Tutup chat" : "Buka chat"}>
-          <IconButton
-            color="primary"
-            onClick={handleToggle}
-            sx={{
-              width: 52,
-              height: 52,
-              borderRadius: "50%",
-              boxShadow: 6,
-              bgcolor: "primary.main",
-              "&:hover": {
-                bgcolor: "primary.dark",
-              },
-            }}
-          >
-            <ChatBubbleOutlineIcon sx={{ color: "primary.contrastText" }} />
-          </IconButton>
-        </Tooltip>
-      )}
+      <Tooltip title={open ? "Tutup chat" : "Buka chat"}>
+        <IconButton
+          color="primary"
+          onClick={handleToggle}
+          sx={{
+            width: 52,
+            height: 52,
+            borderRadius: "50%",
+            boxShadow: 6,
+            bgcolor: "primary.main",
+            "&:hover": {
+              bgcolor: "primary.dark",
+            },
+          }}
+        >
+          <ChatBubbleOutlineIcon sx={{ color: "primary.contrastText" }} />
+        </IconButton>
+      </Tooltip>
     </Box>
   );
 }
+
