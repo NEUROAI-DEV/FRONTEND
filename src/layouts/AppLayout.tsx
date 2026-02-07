@@ -181,18 +181,18 @@ export default function AppLayout() {
       link: "/top-signals",
       icon: <IconMenus.token />,
     },
-    // { title: "Watchlist", link: "/products", icon: <IconMenus.watchList /> },
+    { title: "Watchlist", link: "/products", icon: <IconMenus.watchList /> },
     {
       title: "Screeners",
       link: "/screeners",
       icon: <IconMenus.trend />,
     },
     { title: "News", link: "/news", icon: <IconMenus.news /> },
-    // {
-    //   title: "Markert Trends",
-    //   link: "/customers",
-    //   icon: <IconMenus.trend />,
-    // },
+    {
+      title: "Markert Trends",
+      link: "/customers",
+      icon: <IconMenus.trend />,
+    },
     { title: "Academy", link: "/orders", icon: <IconMenus.academy /> },
     {
       title: "Support",

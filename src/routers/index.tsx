@@ -43,6 +43,10 @@ export default function AppRouters() {
       path: "/news",
       element: <ListNewsView />,
     },
+    {
+      path: "/screeners",
+      element: <ListScreenerView />,
+    },
 
     //my profile routers
     {

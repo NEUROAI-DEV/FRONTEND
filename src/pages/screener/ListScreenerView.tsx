@@ -7,21 +7,36 @@ import {
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
+import AddIcon from "@mui/icons-material/Add";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { useEffect, useState } from "react";
 import {
   Alert,
+  Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
+  FormControl,
   IconButton,
   InputAdornment,
+  InputLabel,
+  List,
+  ListItemButton,
+  ListItemText,
+  MenuItem,
   Paper,
+  Select,
   Stack,
   TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
+import CircularProgress from "@mui/material/CircularProgress";
+import Pagination from "@mui/material/Pagination";
 import { useHttp } from "../../hooks/http";
 import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
@@ -72,6 +87,12 @@ interface ScreenerRow {
   createdAt: string;
 }
 
+/** markets/coins response item */
+interface CoinItem {
+  symbol: string;
+  baseAsset: string;
+}
+
 function NoRowsOverlay({
   title,
   subtitle,
@@ -96,15 +117,19 @@ function NoRowsOverlay({
   );
 }
 
+const SCREENER_PROFILES = ["SCALPING", "SWING", "DAY_TRADING"] as const;
+
 function ScreenerToolbar({
   query,
   onQueryChange,
   onRefresh,
+  onAddCoin,
   loading,
 }: {
   query: string;
   onQueryChange: (v: string) => void;
   onRefresh: () => void;
+  onAddCoin: () => void;
   loading: boolean;
 }) {
   return (
@@ -115,33 +140,44 @@ function ScreenerToolbar({
         alignItems={{ xs: "stretch", md: "center" }}
         justifyContent="space-between"
       >
-        <TextField
-          value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
-          size="small"
-          placeholder="Search symbol (e.g. ETHUSDT)"
-          sx={{ maxWidth: 420 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-            endAdornment: query ? (
-              <InputAdornment position="end">
-                <Tooltip title="Clear">
-                  <IconButton
-                    size="small"
-                    onClick={() => onQueryChange("")}
-                    edge="end"
-                  >
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </InputAdornment>
-            ) : undefined,
-          }}
-        />
+        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+          <TextField
+            value={query}
+            onChange={(e) => onQueryChange(e.target.value)}
+            size="small"
+            placeholder="Search symbol (e.g. ETHUSDT)"
+            sx={{ maxWidth: 420 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+              endAdornment: query ? (
+                <InputAdornment position="end">
+                  <Tooltip title="Clear">
+                    <IconButton
+                      size="small"
+                      onClick={() => onQueryChange("")}
+                      edge="end"
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ) : undefined,
+            }}
+          />
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<AddIcon />}
+            onClick={onAddCoin}
+            sx={{ whiteSpace: "nowrap" }}
+          >
+            Add Coin
+          </Button>
+        </Stack>
         <Tooltip title="Refresh">
           <span>
             <IconButton
@@ -179,7 +215,8 @@ function mapItemToRow(item: ScreenerItem): ScreenerRow {
 }
 
 export default function ListScreenerView() {
-  const { handleGetTableDataRequest } = useHttp();
+  const { handleGetTableDataRequest, handleGetRequest, handlePostRequest } =
+    useHttp();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<ScreenerRow[]>([]);
   const [rowCount, setRowCount] = useState(0);
@@ -192,6 +229,19 @@ export default function ListScreenerView() {
   });
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
+  const [openAddModal, setOpenAddModal] = useState(false);
+  const [coinSearch, setCoinSearch] = useState("");
+  const [coinPage, setCoinPage] = useState(1);
+  const [coins, setCoins] = useState<CoinItem[]>([]);
+  const [coinsTotal, setCoinsTotal] = useState(0);
+  const [coinsTotalPages, setCoinsTotalPages] = useState(1);
+  const [loadingCoins, setLoadingCoins] = useState(false);
+  const [selectedCoin, setSelectedCoin] = useState<CoinItem | null>(null);
+  const [selectedProfile, setSelectedProfile] =
+    useState<(typeof SCREENER_PROFILES)[number]>("SCALPING");
+  const [saving, setSaving] = useState(false);
+  const [debouncedCoinSearch, setDebouncedCoinSearch] = useState("");
+
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query.trim()), 400);
     return () => clearTimeout(t);
@@ -200,6 +250,71 @@ export default function ListScreenerView() {
   useEffect(() => {
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
   }, [debouncedQuery]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedCoinSearch(coinSearch.trim()), 400);
+    return () => clearTimeout(t);
+  }, [coinSearch]);
+
+  const fetchCoins = async () => {
+    setLoadingCoins(true);
+    try {
+      const path = `/markets/coins?search=${encodeURIComponent(debouncedCoinSearch)}&page=${coinPage}&limit=20`;
+      const result = await handleGetRequest({ path });
+      if (result?.items) {
+        setCoins(result.items as CoinItem[]);
+        setCoinsTotal(result.totalItems ?? 0);
+        setCoinsTotalPages(result.totalPages ?? 1);
+      } else {
+        setCoins([]);
+        setCoinsTotal(0);
+        setCoinsTotalPages(1);
+      }
+    } catch {
+      setCoins([]);
+      setCoinsTotal(0);
+      setCoinsTotalPages(1);
+    } finally {
+      setLoadingCoins(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!openAddModal) return;
+    fetchCoins();
+  }, [openAddModal, debouncedCoinSearch, coinPage]);
+
+  const handleOpenAddModal = () => {
+    setOpenAddModal(true);
+    setCoinSearch("");
+    setCoinPage(1);
+    setSelectedCoin(null);
+    setSelectedProfile("SCALPING");
+    setDebouncedCoinSearch("");
+  };
+
+  const handleCloseAddModal = () => {
+    setOpenAddModal(false);
+    setSelectedCoin(null);
+  };
+
+  const handleSaveAddCoin = async () => {
+    if (!selectedCoin || saving) return;
+    setSaving(true);
+    try {
+      await handlePostRequest({
+        path: "/screeners",
+        body: {
+          screenerCoinSymbol: selectedCoin.symbol,
+          screenerProfile: selectedProfile,
+        },
+      });
+      handleCloseAddModal();
+      fetchScreeners();
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const fetchScreeners = async () => {
     try {
@@ -424,6 +539,7 @@ export default function ListScreenerView() {
                 query,
                 onQueryChange: setQuery,
                 onRefresh: fetchScreeners,
+                onAddCoin: handleOpenAddModal,
                 loading,
               },
             }}
@@ -439,6 +555,117 @@ export default function ListScreenerView() {
             }}
           />
         </Box>
+
+        <Dialog
+          open={openAddModal}
+          onClose={handleCloseAddModal}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: 2 } }}
+        >
+          <DialogTitle>Add Coin to Screener</DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ pt: 0.5 }}>
+              <TextField
+                size="small"
+                fullWidth
+                placeholder="Search coin (e.g. BTC)"
+                value={coinSearch}
+                onChange={(e) => {
+                  setCoinSearch(e.target.value);
+                  setCoinPage(1);
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <FormControl size="small" fullWidth>
+                <InputLabel>Profile</InputLabel>
+                <Select
+                  value={selectedProfile}
+                  label="Profile"
+                  onChange={(e) =>
+                    setSelectedProfile(
+                      e.target.value as (typeof SCREENER_PROFILES)[number]
+                    )
+                  }
+                >
+                  {SCREENER_PROFILES.map((p) => (
+                    <MenuItem key={p} value={p}>
+                      {p}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Box>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  Select a coin
+                </Typography>
+                {loadingCoins ? (
+                  <Stack alignItems="center" justifyContent="center" sx={{ py: 4 }}>
+                    <CircularProgress size={28} />
+                  </Stack>
+                ) : coins.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+                    No coins found. Try a different search.
+                  </Typography>
+                ) : (
+                  <>
+                    <List
+                      dense
+                      sx={{
+                        maxHeight: 280,
+                        overflow: "auto",
+                        border: 1,
+                        borderColor: "divider",
+                        borderRadius: 1,
+                      }}
+                    >
+                      {coins.map((coin) => (
+                        <ListItemButton
+                          key={coin.symbol}
+                          selected={selectedCoin?.symbol === coin.symbol}
+                          onClick={() => setSelectedCoin(coin)}
+                        >
+                          <ListItemText
+                            primary={coin.symbol}
+                            secondary={coin.baseAsset}
+                          />
+                        </ListItemButton>
+                      ))}
+                    </List>
+                    {coinsTotalPages > 1 && (
+                      <Stack alignItems="center" sx={{ mt: 1.5 }}>
+                        <Pagination
+                          color="primary"
+                          size="small"
+                          count={coinsTotalPages}
+                          page={coinPage}
+                          onChange={(_, p) => setCoinPage(p)}
+                        />
+                      </Stack>
+                    )}
+                  </>
+                )}
+              </Box>
+            </Stack>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={handleCloseAddModal}>Cancel</Button>
+            <Button
+              variant="contained"
+              onClick={handleSaveAddCoin}
+              disabled={!selectedCoin || saving}
+              startIcon={saving ? <CircularProgress size={16} /> : null}
+            >
+              {saving ? "Saving..." : "Save"}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Paper>
     </Box>
   );
