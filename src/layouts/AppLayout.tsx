@@ -181,7 +181,6 @@ export default function AppLayout() {
       link: "/top-signals",
       icon: <IconMenus.token />,
     },
-    { title: "Watchlist", link: "/products", icon: <IconMenus.watchList /> },
     {
       title: "Screeners",
       link: "/screeners",
@@ -193,7 +192,7 @@ export default function AppLayout() {
       link: "/customers",
       icon: <IconMenus.trend />,
     },
-    { title: "Academy", link: "/orders", icon: <IconMenus.academy /> },
+    { title: "Academy", link: "/academy", icon: <IconMenus.academy /> },
     {
       title: "Support",
       link: "/transactions",

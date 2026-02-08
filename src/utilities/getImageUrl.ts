@@ -1,5 +1,5 @@
-import { CONFIGS } from '../configs';
+import { CONFIGS } from "../configs";
 
 export function getImageUrl(path: string): string {
-    return `${CONFIGS.uploadFileUrl}/${path}`;
+  return `${CONFIGS.uploadFileUrl}/${path}`;
 }

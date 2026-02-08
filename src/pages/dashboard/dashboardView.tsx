@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Card,
   Grid,
@@ -8,15 +9,86 @@ import {
   useTheme,
   Divider,
   LinearProgress,
+  Chip,
+  Alert,
+  CircularProgress,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
 import ReactApexChart from "react-apexcharts";
 import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
 import { useNavigate } from "react-router-dom";
+import { useHttp } from "../../hooks/http";
+import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
+
+/* ================= API: baseUrl/markets/daily-summary ================= */
+interface DailySummaryData {
+  dailySummaryId?: number;
+  dailySummaryDate?: string;
+  dailySummaryMarketSentiment?: string;
+  dailySummaryConfidence?: string;
+  dailySummarySummary?: string;
+  dailySummaryHighlights?: string[];
+}
+
+function getSentimentColor(
+  sentiment: string,
+): "default" | "primary" | "success" | "warning" | "error" {
+  const v = String(sentiment ?? "").toUpperCase();
+  if (v === "NEGATIVE") return "error";
+  if (v === "POSITIVE") return "primary";
+  if (v === "NEUTRAL") return "success";
+  return "default";
+}
 
 const DashboardView = () => {
   const theme = useTheme();
   const navigation = useNavigate();
+  const { handleGetRequest } = useHttp();
+
+  const [dailySummary, setDailySummary] = useState<DailySummaryData | null>(
+    null,
+  );
+  const [dailySummaryLoading, setDailySummaryLoading] = useState(true);
+  const [dailySummaryError, setDailySummaryError] = useState<string | null>(
+    null,
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchDailySummary = async () => {
+      setDailySummaryLoading(true);
+      setDailySummaryError(null);
+      try {
+        const result = await handleGetRequest({
+          path: "/markets/daily-summary",
+        });
+        if (!cancelled && result) {
+          setDailySummary({
+            dailySummaryId: result.dailySummaryId,
+            dailySummaryDate: result.dailySummaryDate,
+            dailySummaryMarketSentiment: result.dailySummaryMarketSentiment,
+            dailySummaryConfidence: result.dailySummaryConfidence,
+            dailySummarySummary: result.dailySummarySummary,
+            dailySummaryHighlights: result.dailySummaryHighlights ?? [],
+          });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setDailySummaryError("Failed to load daily summary.");
+        }
+      } finally {
+        if (!cancelled) setDailySummaryLoading(false);
+      }
+    };
+    fetchDailySummary();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   /* ================= DUMMY DATA ================= */
 
@@ -176,51 +248,106 @@ const DashboardView = () => {
             />
           </Card>
         </Grid>
+      </Grid>
 
-        {/* Sentiment Analysis */}
+      {/* ================= DAILY MARKET SUMMARY (API) ================= */}
+      <Grid container spacing={3} my={3}>
         <Grid item xs={12}>
           <Card sx={{ p: 3, borderRadius: 3 }}>
-            <Stack direction="row" justifyContent="space-between" mb={2}>
-              <Typography fontWeight="bold">
-                Market Sentiment Analysis
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              flexWrap="wrap"
+              gap={1}
+              mb={2}
+            >
+              <Typography fontWeight="bold" variant="h6">
+                Daily Market Summary
               </Typography>
-              <Typography
-                fontWeight="bold"
-                color={sentiment.score > 60 ? "success.main" : "error.main"}
-              >
-                Score: {sentiment.score}
-              </Typography>
+              {dailySummaryLoading && <CircularProgress size={24} />}
             </Stack>
-
             <Divider sx={{ mb: 2 }} />
-
-            {[
-              { label: "Twitter", value: sentiment.twitter },
-              { label: "Reddit", value: sentiment.reddit },
-              { label: "News", value: sentiment.news },
-              { label: "Telegram", value: sentiment.telegram },
-            ].map((item, i) => (
-              <Box key={i} mb={2}>
-                <Stack direction="row" justifyContent="space-between">
-                  <Typography variant="body2">{item.label}</Typography>
-                  <Typography
-                    variant="body2"
-                    color={item.value > 60 ? "success.main" : "error.main"}
-                  >
-                    {item.value}%
-                  </Typography>
+            {dailySummaryError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {dailySummaryError}
+              </Alert>
+            )}
+            {!dailySummaryLoading && dailySummary && (
+              <Stack spacing={2}>
+                <Stack
+                  direction="row"
+                  flexWrap="wrap"
+                  alignItems="center"
+                  gap={1}
+                >
+                  {dailySummary.dailySummaryDate && (
+                    <Typography variant="body2" color="text.secondary">
+                      {dailySummary.dailySummaryDate}
+                    </Typography>
+                  )}
+                  {dailySummary.dailySummaryMarketSentiment && (
+                    <Chip
+                      size="small"
+                      label={dailySummary.dailySummaryMarketSentiment}
+                      color={getSentimentColor(
+                        dailySummary.dailySummaryMarketSentiment,
+                      )}
+                      variant="outlined"
+                    />
+                  )}
+                  {dailySummary.dailySummaryConfidence != null &&
+                    dailySummary.dailySummaryConfidence !== "" && (
+                      <Typography variant="body2" color="text.secondary">
+                        Confidence:{" "}
+                        {Number(dailySummary.dailySummaryConfidence) * 100}%
+                      </Typography>
+                    )}
                 </Stack>
-                <LinearProgress
-                  variant="determinate"
-                  value={item.value}
-                  sx={{
-                    height: 8,
-                    borderRadius: 5,
-                    mt: 0.5,
-                  }}
-                />
-              </Box>
-            ))}
+                {dailySummary.dailySummarySummary && (
+                  <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
+                    {dailySummary.dailySummarySummary}
+                  </Typography>
+                )}
+                {dailySummary.dailySummaryHighlights &&
+                  dailySummary.dailySummaryHighlights.length > 0 && (
+                    <Box>
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight={600}
+                        gutterBottom
+                      >
+                        Highlights
+                      </Typography>
+                      <List dense disablePadding>
+                        {dailySummary.dailySummaryHighlights.map((item, i) => (
+                          <ListItem
+                            key={i}
+                            disablePadding
+                            sx={{ alignItems: "flex-start", py: 0.25 }}
+                          >
+                            <ListItemIcon sx={{ minWidth: 24, mt: 0.25 }}>
+                              <FiberManualRecordIcon
+                                sx={{ fontSize: 8 }}
+                                color="primary"
+                              />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={item}
+                              primaryTypographyProps={{ variant: "body2" }}
+                            />
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Box>
+                  )}
+              </Stack>
+            )}
+            {!dailySummaryLoading && !dailySummary && !dailySummaryError && (
+              <Typography variant="body2" color="text.secondary">
+                No daily summary available.
+              </Typography>
+            )}
           </Card>
         </Grid>
       </Grid>

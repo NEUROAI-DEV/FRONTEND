@@ -7,8 +7,10 @@ import ProfileView from "../pages/myProfile/Index";
 import AuthLayout from "../layouts/AuthLayout";
 import { useToken } from "../hooks/token";
 import ListNewsView from "../pages/news/ListNewsView";
+import DetailNewsView from "../pages/news/DetailNewsView";
 import ListTopSignalsView from "../pages/topSignal/ListTopSignalView";
 import ListScreenerView from "../pages/screener/ListScreenerView";
+import ListAcademyView from "../pages/academy/ListAcademyView";
 
 export default function AppRouters() {
   const routers: { path: string; element: JSX.Element }[] = [];
@@ -35,17 +37,21 @@ export default function AppRouters() {
     },
 
     {
+      path: "/news",
+      element: <ListNewsView />,
+    },
+    {
+      path: "/news/:newsId",
+      element: <DetailNewsView />,
+    },
+    {
       path: "/screeners",
       element: <ListScreenerView />,
     },
 
     {
-      path: "/news",
-      element: <ListNewsView />,
-    },
-    {
-      path: "/screeners",
-      element: <ListScreenerView />,
+      path: "/academy",
+      element: <ListAcademyView />,
     },
 
     //my profile routers
