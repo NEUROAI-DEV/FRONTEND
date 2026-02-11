@@ -177,6 +177,11 @@ export default function AppLayout() {
   const menuItems = [
     { title: "Dashboard", link: "/", icon: <IconMenus.dashboard /> },
     {
+      title: "Markets",
+      link: "/markets",
+      icon: <IconMenus.trend />,
+    },
+    {
       title: "Top Signals",
       link: "/top-signals",
       icon: <IconMenus.token />,
@@ -187,11 +192,9 @@ export default function AppLayout() {
       icon: <IconMenus.trend />,
     },
     { title: "News", link: "/news", icon: <IconMenus.news /> },
-    {
-      title: "Markert Trends",
-      link: "/customers",
-      icon: <IconMenus.trend />,
-    },
+
+    { title: "Watchlist", link: "/products", icon: <IconMenus.watchList /> },
+
     { title: "Academy", link: "/academy", icon: <IconMenus.academy /> },
     {
       title: "Support",

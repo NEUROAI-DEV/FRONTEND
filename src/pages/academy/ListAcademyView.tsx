@@ -25,7 +25,6 @@ import { useHttp } from "../../hooks/http";
 import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
 import { CONFIGS } from "../../configs";
-import { getImageUrl } from "../../utilities/getImageUrl";
 
 /* ============================================================
    API: baseUrl/articles
@@ -37,6 +36,13 @@ interface ArticleItem {
   articleDescription: string;
   articleImage: string | null;
   createdAt?: string;
+}
+
+function getArticleImageUrl(articleImage: string | null | undefined): string | null {
+  if (!articleImage) return null;
+  if (articleImage.startsWith("http")) return articleImage;
+  const base = CONFIGS.baseUrl || "";
+  return base ? `${base.replace(/\/$/, "")}/uploads/${articleImage}` : null;
 }
 
 export default function ListAcademyView() {
@@ -89,7 +95,7 @@ export default function ListAcademyView() {
     return () => {
       cancelled = true;
     };
-  }, [debouncedQuery]);
+  }, [page, pageSize, debouncedQuery, handleGetTableDataRequest]);
 
   const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
@@ -152,7 +158,9 @@ export default function ListAcademyView() {
             />
           </Stack>
 
-          {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
+          {errorMessage && (
+            <Alert severity="error">{errorMessage}</Alert>
+          )}
 
           <Divider />
 
@@ -176,11 +184,7 @@ export default function ListAcademyView() {
             <>
               <Grid container spacing={3}>
                 {items.map((article) => {
-                  const imageUrl = article.articleImage
-                    ? getImageUrl(article.articleImage)
-                    : null;
-
-                  console.log(imageUrl);
+                  const imageUrl = getArticleImageUrl(article.articleImage);
                   return (
                     <Grid item xs={12} sm={6} md={4} key={article.articleId}>
                       <Card
@@ -191,8 +195,7 @@ export default function ListAcademyView() {
                           flexDirection: "column",
                           borderRadius: 2,
                           overflow: "hidden",
-                          transition:
-                            "box-shadow 0.2s ease, transform 0.2s ease",
+                          transition: "box-shadow 0.2s ease, transform 0.2s ease",
                           "&:hover": {
                             boxShadow: 4,
                             transform: "translateY(-2px)",
@@ -200,12 +203,7 @@ export default function ListAcademyView() {
                         }}
                       >
                         <CardActionArea
-                          sx={{
-                            flexGrow: 1,
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "stretch",
-                          }}
+                          sx={{ flexGrow: 1, display: "flex", flexDirection: "column", alignItems: "stretch" }}
                           component="a"
                           href={`/academy/${article.articleId}`}
                         >
@@ -253,7 +251,7 @@ export default function ListAcademyView() {
                 })}
               </Grid>
 
-              {totalPages > 0 && (
+              {totalPages > 1 && (
                 <Stack alignItems="center" sx={{ pt: 3 }}>
                   <Pagination
                     color="primary"
@@ -264,13 +262,8 @@ export default function ListAcademyView() {
                     showFirstButton
                     showLastButton
                   />
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ mt: 1 }}
-                  >
-                    Page {page} of {totalPages} • {totalItems} article
-                    {totalItems !== 1 ? "s" : ""}
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                    Page {page} of {totalPages} • {totalItems} article{totalItems !== 1 ? "s" : ""}
                   </Typography>
                 </Stack>
               )}
