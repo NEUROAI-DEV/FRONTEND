@@ -38,7 +38,9 @@ interface ArticleItem {
   createdAt?: string;
 }
 
-function getArticleImageUrl(articleImage: string | null | undefined): string | null {
+function getArticleImageUrl(
+  articleImage: string | null | undefined,
+): string | null {
   if (!articleImage) return null;
   if (articleImage.startsWith("http")) return articleImage;
   const base = CONFIGS.baseUrl || "";
@@ -95,7 +97,7 @@ export default function ListAcademyView() {
     return () => {
       cancelled = true;
     };
-  }, [page, pageSize, debouncedQuery, handleGetTableDataRequest]);
+  }, [debouncedQuery]);
 
   const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
@@ -158,9 +160,7 @@ export default function ListAcademyView() {
             />
           </Stack>
 
-          {errorMessage && (
-            <Alert severity="error">{errorMessage}</Alert>
-          )}
+          {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
 
           <Divider />
 
@@ -195,7 +195,8 @@ export default function ListAcademyView() {
                           flexDirection: "column",
                           borderRadius: 2,
                           overflow: "hidden",
-                          transition: "box-shadow 0.2s ease, transform 0.2s ease",
+                          transition:
+                            "box-shadow 0.2s ease, transform 0.2s ease",
                           "&:hover": {
                             boxShadow: 4,
                             transform: "translateY(-2px)",
@@ -203,7 +204,12 @@ export default function ListAcademyView() {
                         }}
                       >
                         <CardActionArea
-                          sx={{ flexGrow: 1, display: "flex", flexDirection: "column", alignItems: "stretch" }}
+                          sx={{
+                            flexGrow: 1,
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "stretch",
+                          }}
                           component="a"
                           href={`/academy/${article.articleId}`}
                         >
@@ -262,8 +268,13 @@ export default function ListAcademyView() {
                     showFirstButton
                     showLastButton
                   />
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-                    Page {page} of {totalPages} • {totalItems} article{totalItems !== 1 ? "s" : ""}
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mt: 1 }}
+                  >
+                    Page {page} of {totalPages} • {totalItems} article
+                    {totalItems !== 1 ? "s" : ""}
                   </Typography>
                 </Stack>
               )}

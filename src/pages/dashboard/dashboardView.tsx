@@ -34,7 +34,7 @@ interface DailySummaryData {
 }
 
 function getSentimentColor(
-  sentiment: string
+  sentiment: string,
 ): "default" | "primary" | "success" | "warning" | "error" {
   const v = String(sentiment ?? "").toUpperCase();
   if (v === "NEGATIVE") return "error";
@@ -47,9 +47,13 @@ const DashboardView = () => {
   const theme = useTheme();
   const { handleGetRequest } = useHttp();
 
-  const [dailySummary, setDailySummary] = useState<DailySummaryData | null>(null);
+  const [dailySummary, setDailySummary] = useState<DailySummaryData | null>(
+    null,
+  );
   const [dailySummaryLoading, setDailySummaryLoading] = useState(true);
-  const [dailySummaryError, setDailySummaryError] = useState<string | null>(null);
+  const [dailySummaryError, setDailySummaryError] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -57,7 +61,9 @@ const DashboardView = () => {
       setDailySummaryLoading(true);
       setDailySummaryError(null);
       try {
-        const result = await handleGetRequest({ path: "/markets/daily-summary" });
+        const result = await handleGetRequest({
+          path: "/markets/daily-summary",
+        });
         if (!cancelled && result) {
           setDailySummary({
             dailySummaryId: result.dailySummaryId,
@@ -80,7 +86,7 @@ const DashboardView = () => {
     return () => {
       cancelled = true;
     };
-  }, [handleGetRequest]);
+  }, []);
 
   /* ================= DUMMY DATA ================= */
 
@@ -175,7 +181,14 @@ const DashboardView = () => {
       <Grid container spacing={3} mb={3}>
         <Grid item xs={12}>
           <Card sx={{ p: 3, borderRadius: 3 }}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1} mb={2}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              flexWrap="wrap"
+              gap={1}
+              mb={2}
+            >
               <Typography fontWeight="bold" variant="h6">
                 Daily Market Summary
               </Typography>
@@ -189,7 +202,12 @@ const DashboardView = () => {
             )}
             {!dailySummaryLoading && dailySummary && (
               <Stack spacing={2}>
-                <Stack direction="row" flexWrap="wrap" alignItems="center" gap={1}>
+                <Stack
+                  direction="row"
+                  flexWrap="wrap"
+                  alignItems="center"
+                  gap={1}
+                >
                   {dailySummary.dailySummaryDate && (
                     <Typography variant="body2" color="text.secondary">
                       {dailySummary.dailySummaryDate}
@@ -199,41 +217,57 @@ const DashboardView = () => {
                     <Chip
                       size="small"
                       label={dailySummary.dailySummaryMarketSentiment}
-                      color={getSentimentColor(dailySummary.dailySummaryMarketSentiment)}
+                      color={getSentimentColor(
+                        dailySummary.dailySummaryMarketSentiment,
+                      )}
                       variant="outlined"
                     />
                   )}
-                  {dailySummary.dailySummaryConfidence != null && dailySummary.dailySummaryConfidence !== "" && (
-                    <Typography variant="body2" color="text.secondary">
-                      Confidence: {Number(dailySummary.dailySummaryConfidence) * 100}%
-                    </Typography>
-                  )}
+                  {dailySummary.dailySummaryConfidence != null &&
+                    dailySummary.dailySummaryConfidence !== "" && (
+                      <Typography variant="body2" color="text.secondary">
+                        Confidence:{" "}
+                        {Number(dailySummary.dailySummaryConfidence) * 100}%
+                      </Typography>
+                    )}
                 </Stack>
                 {dailySummary.dailySummarySummary && (
                   <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
                     {dailySummary.dailySummarySummary}
                   </Typography>
                 )}
-                {dailySummary.dailySummaryHighlights && dailySummary.dailySummaryHighlights.length > 0 && (
-                  <Box>
-                    <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                      Highlights
-                    </Typography>
-                    <List dense disablePadding>
-                      {dailySummary.dailySummaryHighlights.map((item, i) => (
-                        <ListItem key={i} disablePadding sx={{ alignItems: "flex-start", py: 0.25 }}>
-                          <ListItemIcon sx={{ minWidth: 24, mt: 0.25 }}>
-                            <FiberManualRecordIcon sx={{ fontSize: 8 }} color="primary" />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={item}
-                            primaryTypographyProps={{ variant: "body2" }}
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Box>
-                )}
+                {dailySummary.dailySummaryHighlights &&
+                  dailySummary.dailySummaryHighlights.length > 0 && (
+                    <Box>
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight={600}
+                        gutterBottom
+                      >
+                        Highlights
+                      </Typography>
+                      <List dense disablePadding>
+                        {dailySummary.dailySummaryHighlights.map((item, i) => (
+                          <ListItem
+                            key={i}
+                            disablePadding
+                            sx={{ alignItems: "flex-start", py: 0.25 }}
+                          >
+                            <ListItemIcon sx={{ minWidth: 24, mt: 0.25 }}>
+                              <FiberManualRecordIcon
+                                sx={{ fontSize: 8 }}
+                                color="primary"
+                              />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={item}
+                              primaryTypographyProps={{ variant: "body2" }}
+                            />
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Box>
+                  )}
               </Stack>
             )}
             {!dailySummaryLoading && !dailySummary && !dailySummaryError && (

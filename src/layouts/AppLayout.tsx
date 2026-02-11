@@ -189,18 +189,16 @@ export default function AppLayout() {
     {
       title: "Screeners",
       link: "/screeners",
-      icon: <IconMenus.trend />,
+      icon: <IconMenus.screener />,
     },
     { title: "News", link: "/news", icon: <IconMenus.news /> },
 
-    { title: "Watchlist", link: "/products", icon: <IconMenus.watchList /> },
-
     { title: "Academy", link: "/academy", icon: <IconMenus.academy /> },
-    {
-      title: "Support",
-      link: "/transactions",
-      icon: <IconMenus.support />,
-    },
+    // {
+    //   title: "Support",
+    //   link: "/transactions",
+    //   icon: <IconMenus.support />,
+    // },
     { title: "Profile", link: "/my-profile", icon: <IconMenus.profile /> },
   ];
 

@@ -1,6 +1,7 @@
 import Box from "@mui/material/Box";
 import {
   DataGrid,
+  GridActionsCellItem,
   GridColDef,
   GridToolbarContainer,
 } from "@mui/x-data-grid";
@@ -40,6 +41,9 @@ import Pagination from "@mui/material/Pagination";
 import { useHttp } from "../../hooks/http";
 import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
+import { IScreener } from "../../interfaces/Screener";
+import DeleteIcon from "@mui/icons-material/DeleteOutlined";
+import ModalStyle from "../../components/modal";
 
 /* ============================================================
    Data: baseUrl/screeners
@@ -133,7 +137,7 @@ function ScreenerToolbar({
   loading: boolean;
 }) {
   return (
-    <GridToolbarContainer sx={{ px: 0, py: 0 }}>
+    <GridToolbarContainer sx={{ px: 0, py: 0, my: 2 }}>
       <Stack
         direction={{ xs: "column", md: "row" }}
         spacing={1.25}
@@ -170,7 +174,6 @@ function ScreenerToolbar({
           />
           <Button
             variant="outlined"
-            size="small"
             startIcon={<AddIcon />}
             onClick={onAddCoin}
             sx={{ whiteSpace: "nowrap" }}
@@ -183,7 +186,6 @@ function ScreenerToolbar({
             <IconButton
               onClick={onRefresh}
               disabled={loading}
-              size="small"
               sx={{ border: 1, borderColor: "divider", borderRadius: 1 }}
             >
               <RefreshIcon fontSize="small" />
@@ -215,8 +217,12 @@ function mapItemToRow(item: ScreenerItem): ScreenerRow {
 }
 
 export default function ListScreenerView() {
-  const { handleGetTableDataRequest, handleGetRequest, handlePostRequest } =
-    useHttp();
+  const {
+    handleGetTableDataRequest,
+    handleGetRequest,
+    handlePostRequest,
+    handleRemoveRequest,
+  } = useHttp();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<ScreenerRow[]>([]);
   const [rowCount, setRowCount] = useState(0);
@@ -242,6 +248,21 @@ export default function ListScreenerView() {
   const [saving, setSaving] = useState(false);
   const [debouncedCoinSearch, setDebouncedCoinSearch] = useState("");
 
+  const [modalDeleteData, setModalDeleteData] = useState<IScreener>();
+  const [openModalDelete, setOpenModalDelete] = useState<boolean>(false);
+
+  const handleDeleteListItem = async (itemId: string) => {
+    await handleRemoveRequest({
+      path: `/screeners/${itemId}`,
+    });
+    fetchScreeners();
+  };
+
+  const handleOpenModalDelete = (data: IScreener) => {
+    setModalDeleteData(data);
+    setOpenModalDelete(!openModalDelete);
+  };
+
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query.trim()), 400);
     return () => clearTimeout(t);
@@ -261,6 +282,7 @@ export default function ListScreenerView() {
     try {
       const path = `/markets/coins?search=${encodeURIComponent(debouncedCoinSearch)}&page=${coinPage}&limit=20`;
       const result = await handleGetRequest({ path });
+
       if (result?.items) {
         setCoins(result.items as CoinItem[]);
         setCoinsTotal(result.totalItems ?? 0);
@@ -471,6 +493,23 @@ export default function ListScreenerView() {
         );
       },
     },
+    {
+      field: "actions",
+      type: "actions",
+      renderHeader: () => <strong>{"ACTION"}</strong>,
+      flex: 1,
+      cellClassName: "actions",
+      getActions: ({ row }) => {
+        return [
+          <GridActionsCellItem
+            icon={<DeleteIcon color="error" />}
+            label="Delete"
+            onClick={() => handleOpenModalDelete(row)}
+            color="inherit"
+          />,
+        ];
+      },
+    },
   ];
 
   return (
@@ -493,9 +532,7 @@ export default function ListScreenerView() {
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Analysis & entry zones
-              {lastUpdated
-                ? ` • Updated ${lastUpdated.toLocaleString()}`
-                : ""}
+              {lastUpdated ? ` • Updated ${lastUpdated.toLocaleString()}` : ""}
             </Typography>
           </Box>
         </Stack>
@@ -590,7 +627,7 @@ export default function ListScreenerView() {
                   label="Profile"
                   onChange={(e) =>
                     setSelectedProfile(
-                      e.target.value as (typeof SCREENER_PROFILES)[number]
+                      e.target.value as (typeof SCREENER_PROFILES)[number],
                     )
                   }
                 >
@@ -606,11 +643,19 @@ export default function ListScreenerView() {
                   Select a coin
                 </Typography>
                 {loadingCoins ? (
-                  <Stack alignItems="center" justifyContent="center" sx={{ py: 4 }}>
+                  <Stack
+                    alignItems="center"
+                    justifyContent="center"
+                    sx={{ py: 4 }}
+                  >
                     <CircularProgress size={28} />
                   </Stack>
                 ) : coins.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ py: 2 }}
+                  >
                     No coins found. Try a different search.
                   </Typography>
                 ) : (
@@ -667,6 +712,16 @@ export default function ListScreenerView() {
           </DialogActions>
         </Dialog>
       </Paper>
+
+      <ModalStyle
+        openModal={openModalDelete}
+        handleModalOnCancel={() => setOpenModalDelete(false)}
+        message={`Are you sure you want to delete ${modalDeleteData?.symbol}?`}
+        handleModal={() => {
+          handleDeleteListItem(modalDeleteData?.screenerId + "");
+          setOpenModalDelete(false);
+        }}
+      />
     </Box>
   );
 }

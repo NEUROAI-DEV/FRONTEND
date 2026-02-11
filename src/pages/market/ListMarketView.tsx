@@ -96,7 +96,7 @@ export default function ListMarketView() {
     ? items.filter(
         (c) =>
           c.symbol?.toLowerCase().includes(query.trim().toLowerCase()) ||
-          c.name?.toLowerCase().includes(query.trim().toLowerCase())
+          c.name?.toLowerCase().includes(query.trim().toLowerCase()),
       )
     : items;
 
@@ -125,7 +125,7 @@ export default function ListMarketView() {
                 Coin Market
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Top coins by market cap (CoinGecko)
+                Top coins by market cap
               </Typography>
             </Box>
             <Stack direction="row" spacing={1} alignItems="center">
@@ -225,7 +225,11 @@ export default function ListMarketView() {
                             {row.market_cap_rank}
                           </TableCell>
                           <TableCell>
-                            <Stack direction="row" spacing={1.5} alignItems="center">
+                            <Stack
+                              direction="row"
+                              spacing={1.5}
+                              alignItems="center"
+                            >
                               <Box
                                 component="img"
                                 src={row.image}
@@ -241,7 +245,10 @@ export default function ListMarketView() {
                                 <Typography fontWeight={700}>
                                   {row.name}
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary">
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
                                   {String(row.symbol).toUpperCase()}
                                 </Typography>
                               </Stack>
@@ -260,14 +267,22 @@ export default function ListMarketView() {
                               justifyContent="flex-end"
                             >
                               {isPositive ? (
-                                <TrendingUpIcon fontSize="small" color="success" />
+                                <TrendingUpIcon
+                                  fontSize="small"
+                                  color="success"
+                                />
                               ) : (
-                                <TrendingDownIcon fontSize="small" color="error" />
+                                <TrendingDownIcon
+                                  fontSize="small"
+                                  color="error"
+                                />
                               )}
                               <Typography
                                 variant="body2"
                                 fontWeight={600}
-                                color={isPositive ? "success.main" : "error.main"}
+                                color={
+                                  isPositive ? "success.main" : "error.main"
+                                }
                               >
                                 {change24 >= 0 ? "+" : ""}
                                 {change24.toFixed(2)}%
