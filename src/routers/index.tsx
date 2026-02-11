@@ -5,6 +5,7 @@ import DashboardView from "../pages/dashboard/dashboardView";
 import LoginView from "../pages/auth/Login";
 import RegisterView from "../pages/auth/Register";
 import ProfileView from "../pages/myProfile/Index";
+import ChatView from "../pages/chat/ChatView";
 import AuthLayout from "../layouts/AuthLayout";
 import { useToken } from "../hooks/token";
 import ListNewsView from "../pages/news/ListNewsView";
@@ -90,6 +91,10 @@ export default function AppRouters() {
       element: isAuth ? <AppLayout /> : <AuthLayout />,
       errorElement: <ErrorPage />,
       children: routers,
+    },
+    {
+      path: "/chat",
+      element: <ChatView />,
     },
   ]);
 

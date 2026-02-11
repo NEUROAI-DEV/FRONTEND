@@ -25,6 +25,7 @@ import { useHttp } from "../../hooks/http";
 import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
 import { CONFIGS } from "../../configs";
+import { getImageUrl } from "../../utilities/getImageUrl";
 
 /* ============================================================
    API: baseUrl/articles
@@ -36,15 +37,6 @@ interface ArticleItem {
   articleDescription: string;
   articleImage: string | null;
   createdAt?: string;
-}
-
-function getArticleImageUrl(
-  articleImage: string | null | undefined,
-): string | null {
-  if (!articleImage) return null;
-  if (articleImage.startsWith("http")) return articleImage;
-  const base = CONFIGS.baseUrl || "";
-  return base ? `${base.replace(/\/$/, "")}/uploads/${articleImage}` : null;
 }
 
 export default function ListAcademyView() {
@@ -80,6 +72,9 @@ export default function ListAcademyView() {
           size: pageSize,
           filter: debouncedQuery ? { search: debouncedQuery } : undefined,
         });
+
+        console.log(result);
+        console.log(getImageUrl(result?.items[0].articleImage));
         if (!cancelled && result?.items) {
           setItems(result.items as ArticleItem[]);
           setTotalItems(result.totalItems ?? 0);
@@ -184,7 +179,10 @@ export default function ListAcademyView() {
             <>
               <Grid container spacing={3}>
                 {items.map((article) => {
-                  const imageUrl = getArticleImageUrl(article.articleImage);
+                  const imageUrl =
+                    getImageUrl(article.articleImage) ||
+                    "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=240&fit=crop";
+
                   return (
                     <Grid item xs={12} sm={6} md={4} key={article.articleId}>
                       <Card
@@ -215,10 +213,7 @@ export default function ListAcademyView() {
                           <CardMedia
                             component="img"
                             height="180"
-                            image={
-                              imageUrl ||
-                              "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=240&fit=crop"
-                            }
+                            image={imageUrl}
                             alt={article.articleTitle}
                             sx={{ bgcolor: "action.hover" }}
                           />
