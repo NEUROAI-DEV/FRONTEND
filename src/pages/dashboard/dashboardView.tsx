@@ -129,7 +129,9 @@ const DashboardView = () => {
         sx={{
           mb: 3,
           width: "100%",
-          overflowX: "scroll",
+          maxWidth: "100%",
+          minWidth: 0,
+          overflowX: "auto",
           overflowY: "hidden",
           pb: 1,
           WebkitOverflowScrolling: "touch",
@@ -285,102 +287,100 @@ const DashboardView = () => {
       {/* ================= DAILY MARKET SUMMARY (API) ================= */}
       <Grid container spacing={3} mb={3} maxWidth="100%" mx="auto">
         <Grid item xs={12}>
-          <Card sx={{ p: 3, borderRadius: 3 }}>
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              flexWrap="wrap"
-              gap={1}
-              mb={2}
-            >
-              <Typography fontWeight="bold" variant="h6">
-                Daily Market Summary
-              </Typography>
-              {dailySummaryLoading && <CircularProgress size={24} />}
-            </Stack>
-            <Divider sx={{ mb: 2 }} />
-            {dailySummaryError && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {dailySummaryError}
-              </Alert>
-            )}
-            {!dailySummaryLoading && dailySummary && (
-              <Stack spacing={2}>
-                <Stack
-                  direction="row"
-                  flexWrap="wrap"
-                  alignItems="center"
-                  gap={1}
-                >
-                  {dailySummary.dailySummaryDate && (
-                    <Typography variant="body2" color="text.secondary">
-                      {dailySummary.dailySummaryDate}
-                    </Typography>
-                  )}
-                  {dailySummary.dailySummaryMarketSentiment && (
-                    <Chip
-                      size="small"
-                      label={dailySummary.dailySummaryMarketSentiment}
-                      color={getSentimentColor(
-                        dailySummary.dailySummaryMarketSentiment,
-                      )}
-                      variant="outlined"
-                    />
-                  )}
-                  {dailySummary.dailySummaryConfidence != null &&
-                    dailySummary.dailySummaryConfidence !== "" && (
-                      <Typography variant="body2" color="text.secondary">
-                        Confidence:{" "}
-                        {Number(dailySummary.dailySummaryConfidence) * 100}%
-                      </Typography>
-                    )}
-                </Stack>
-                {dailySummary.dailySummarySummary && (
-                  <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
-                    {dailySummary.dailySummarySummary}
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            flexWrap="wrap"
+            gap={1}
+            mb={2}
+          >
+            <Typography fontWeight="bold" variant="h6">
+              Daily Market Summary
+            </Typography>
+            {dailySummaryLoading && <CircularProgress size={24} />}
+          </Stack>
+          <Divider sx={{ mb: 2 }} />
+          {dailySummaryError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {dailySummaryError}
+            </Alert>
+          )}
+          {!dailySummaryLoading && dailySummary && (
+            <Stack spacing={2}>
+              <Stack
+                direction="row"
+                flexWrap="wrap"
+                alignItems="center"
+                gap={1}
+              >
+                {dailySummary.dailySummaryDate && (
+                  <Typography variant="body2" color="text.secondary">
+                    {dailySummary.dailySummaryDate}
                   </Typography>
                 )}
-                {dailySummary.dailySummaryHighlights &&
-                  dailySummary.dailySummaryHighlights.length > 0 && (
-                    <Box>
-                      <Typography
-                        variant="subtitle2"
-                        fontWeight={600}
-                        gutterBottom
-                      >
-                        Highlights
-                      </Typography>
-                      <List dense disablePadding>
-                        {dailySummary.dailySummaryHighlights.map((item, i) => (
-                          <ListItem
-                            key={i}
-                            disablePadding
-                            sx={{ alignItems: "flex-start", py: 0.25 }}
-                          >
-                            <ListItemIcon sx={{ minWidth: 24, mt: 0.25 }}>
-                              <FiberManualRecordIcon
-                                sx={{ fontSize: 8 }}
-                                color="primary"
-                              />
-                            </ListItemIcon>
-                            <ListItemText
-                              primary={item}
-                              primaryTypographyProps={{ variant: "body2" }}
-                            />
-                          </ListItem>
-                        ))}
-                      </List>
-                    </Box>
+                {dailySummary.dailySummaryMarketSentiment && (
+                  <Chip
+                    size="small"
+                    label={dailySummary.dailySummaryMarketSentiment}
+                    color={getSentimentColor(
+                      dailySummary.dailySummaryMarketSentiment,
+                    )}
+                    variant="outlined"
+                  />
+                )}
+                {dailySummary.dailySummaryConfidence != null &&
+                  dailySummary.dailySummaryConfidence !== "" && (
+                    <Typography variant="body2" color="text.secondary">
+                      Confidence:{" "}
+                      {Number(dailySummary.dailySummaryConfidence) * 100}%
+                    </Typography>
                   )}
               </Stack>
-            )}
-            {!dailySummaryLoading && !dailySummary && !dailySummaryError && (
-              <Typography variant="body2" color="text.secondary">
-                No daily summary available.
-              </Typography>
-            )}
-          </Card>
+              {dailySummary.dailySummarySummary && (
+                <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
+                  {dailySummary.dailySummarySummary}
+                </Typography>
+              )}
+              {dailySummary.dailySummaryHighlights &&
+                dailySummary.dailySummaryHighlights.length > 0 && (
+                  <Box>
+                    <Typography
+                      variant="subtitle2"
+                      fontWeight={600}
+                      gutterBottom
+                    >
+                      Highlights
+                    </Typography>
+                    <List dense disablePadding>
+                      {dailySummary.dailySummaryHighlights.map((item, i) => (
+                        <ListItem
+                          key={i}
+                          disablePadding
+                          sx={{ alignItems: "flex-start", py: 0.25 }}
+                        >
+                          <ListItemIcon sx={{ minWidth: 24, mt: 0.25 }}>
+                            <FiberManualRecordIcon
+                              sx={{ fontSize: 8 }}
+                              color="primary"
+                            />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={item}
+                            primaryTypographyProps={{ variant: "body2" }}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Box>
+                )}
+            </Stack>
+          )}
+          {!dailySummaryLoading && !dailySummary && !dailySummaryError && (
+            <Typography variant="body2" color="text.secondary">
+              No daily summary available.
+            </Typography>
+          )}
         </Grid>
       </Grid>
     </>
