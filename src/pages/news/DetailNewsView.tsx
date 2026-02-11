@@ -30,7 +30,7 @@ interface NewsDetailData {
 }
 
 function getSentimentColor(
-  sentiment: string
+  sentiment: string,
 ): "default" | "primary" | "success" | "warning" | "error" {
   const v = String(sentiment ?? "").toUpperCase();
   if (v === "NEGATIVE") return "error";
@@ -88,7 +88,7 @@ export default function DetailNewsView() {
     return () => {
       cancelled = true;
     };
-  }, [newsId, handleGetRequest]);
+  }, []);
 
   if (loading) {
     return (
@@ -103,7 +103,11 @@ export default function DetailNewsView() {
       <Box sx={{ pb: 2 }}>
         <BreadCrumberStyle
           navigation={[
-            { label: "News", link: "/news", icon: <IconMenus.news fontSize="small" /> },
+            {
+              label: "News",
+              link: "/news",
+              icon: <IconMenus.news fontSize="small" />,
+            },
             { label: "Detail", link: `/news/${newsId}`, icon: undefined },
           ]}
         />
@@ -121,7 +125,11 @@ export default function DetailNewsView() {
     <Box sx={{ pb: 2 }}>
       <BreadCrumberStyle
         navigation={[
-          { label: "News", link: "/news", icon: <IconMenus.news fontSize="small" /> },
+          {
+            label: "News",
+            link: "/news",
+            icon: <IconMenus.news fontSize="small" />,
+          },
           { label: "Detail", link: `/news/${newsId}`, icon: undefined },
         ]}
       />
@@ -162,10 +170,18 @@ export default function DetailNewsView() {
 
           {data.newsSentimentReason && (
             <Box>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              <Typography
+                variant="subtitle2"
+                color="text.secondary"
+                gutterBottom
+              >
                 Sentiment reason
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: "pre-wrap" }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ whiteSpace: "pre-wrap" }}
+              >
                 {data.newsSentimentReason}
               </Typography>
             </Box>

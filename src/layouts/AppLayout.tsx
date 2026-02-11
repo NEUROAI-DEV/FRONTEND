@@ -44,7 +44,7 @@ import { ChatWidget } from "../components/chat/ChatWidget";
 /* ============================================================
    GLOBAL DESIGN TOKENS (MODE AWARE)
 ============================================================ */
-const drawerWidth = 260;
+const drawerWidth = 200;
 const miniDrawerWidth = 64;
 
 const primaryBlue = "#3B82F6";
@@ -53,14 +53,14 @@ const glowBlue = "#60A5FA";
 const tokens = {
   dark: {
     appBg:
-      "radial-gradient(1200px 600px at 10% -10%, rgba(59,130,246,0.14), transparent 40%), #070A12",
-    sidebar: "linear-gradient(180deg, #0B1220 0%, #080D17 60%, #05070C 100%)",
+      "radial-gradient(1200px 600px at 10% -10%, rgba(56,189,248,0.06), transparent 45%), #020617",
+    sidebar: "linear-gradient(180deg, #020617 0%, #020617 60%, #020617 100%)",
     surface:
-      "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
-    border: "rgba(255,255,255,0.08)",
-    hover: "rgba(255,255,255,0.06)",
-    textPrimary: "#FFFFFF",
-    textSecondary: "rgba(255,255,255,0.7)",
+      "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(15,23,42,0.96))",
+    border: "rgba(148,163,184,0.28)",
+    hover: "rgba(15,23,42,0.9)",
+    textPrimary: "#E5E7EB",
+    textSecondary: "#9CA3AF",
   },
 
   light: {
@@ -106,19 +106,12 @@ const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== "open",
 })<AppBarProps>(({ theme, open }) => {
   const t = tokens[theme.palette.mode];
+  const isDark = theme.palette.mode === "dark";
 
   return {
     zIndex: theme.zIndex.drawer + 1,
-    background:
-      theme.palette.mode === "dark"
-        ? "linear-gradient(180deg, rgba(10,14,24,0.75), rgba(10,14,24,0.55))"
-        : "rgba(255,255,255,0.85)",
+    background: isDark ? "rgba(15,23,42,0.92)" : "rgba(255,255,255,0.9)",
     backdropFilter: "blur(18px)",
-    borderBottom: `1px solid ${t.border}`,
-    boxShadow:
-      theme.palette.mode === "dark"
-        ? "0 10px 40px rgba(0,0,0,0.6)"
-        : "0 8px 24px rgba(0,0,0,0.08)",
     marginLeft: open ? drawerWidth : miniDrawerWidth,
     width: `calc(100% - ${open ? drawerWidth : miniDrawerWidth}px)`,
     transition: theme.transitions.create(["width", "margin"]),
@@ -141,7 +134,6 @@ const Drawer = styled(MuiDrawer)<{ open?: boolean }>(({ theme, open }) => {
     "& .MuiDrawer-paper": {
       background: t.sidebar,
       color: t.textSecondary,
-      //   borderRight: `1px solid ${t.border}`,
       ...(open ? openedMixin(theme) : closedMixin(theme)),
     },
   };
@@ -167,7 +159,7 @@ export default function AppLayout() {
   const { appAlert, setAppAlert, isLoading } = useAppContext();
   const { removeToken } = useToken();
 
-  const [openDrawer, setOpenDrawer] = useState(true);
+  const [openDrawer, setOpenDrawer] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
   const [activeLink, setActiveLink] = useState("/");
@@ -231,11 +223,18 @@ export default function AppLayout() {
   const t = tokens[theme.palette.mode];
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", background: t.appBg }}>
+    <Box
+      sx={{
+        display: "flex",
+        minHeight: "100vh",
+        minWidth: "100vw",
+        background: t.appBg,
+      }}
+    >
       <CssBaseline />
 
       {/* ================= APP BAR ================= */}
-      <AppBar position="fixed" open={openDrawer && !isMobile}>
+      <AppBar position="fixed" open={openDrawer && !isMobile} elevation={0}>
         <Container maxWidth="xl">
           <Toolbar sx={{ minHeight: 68 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -338,9 +337,11 @@ export default function AppLayout() {
                 disablePadding
                 sx={{
                   mb: 0.8,
-                  borderRadius: 2,
-                  background: active ? "rgba(59,130,246,0.16)" : "transparent",
-                  "&:hover": { background: t.hover },
+                  borderRadius: 2.5,
+                  background: active ? "rgba(59,130,246,0.12)" : "transparent",
+                  "&:hover": {
+                    background: active ? "rgba(59,130,246,0.16)" : t.hover,
+                  },
                 }}
                 onClick={() => {
                   setActiveLink(item.link);
@@ -360,7 +361,6 @@ export default function AppLayout() {
                   <ListItemText
                     primary={item.title}
                     sx={{
-                      // opacity: !isMobile && openDrawer ? 1 : 0,
                       fontWeight: active ? 700 : 500,
                       color: active ? t.textPrimary : t.textSecondary,
                     }}
@@ -385,16 +385,11 @@ export default function AppLayout() {
         <Box
           sx={{
             background: t.surface,
-            borderRadius: { xs: 2, md: 4 },
             p: { xs: 2, sm: 2.5, md: 3 },
             minHeight: {
               xs: "calc(100vh - 96px)",
               md: "calc(100vh - 110px)",
             },
-            boxShadow:
-              theme.palette.mode === "dark"
-                ? "0 28px 80px rgba(0,0,0,0.65)"
-                : "0 18px 40px rgba(15,23,42,0.12)",
           }}
         >
           {isLoading ? (

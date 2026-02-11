@@ -59,8 +59,7 @@ export function ChatWidget() {
       });
 
       const replyText =
-        (res &&
-          (res.data?.reply || res.data?.message || res.data?.content)) ??
+        (res && (res.data?.reply || res.data?.message || res.data?.content)) ??
         "Terima kasih, pesan Anda sudah diterima.";
 
       const botMessage: ChatMessage = {
@@ -96,9 +95,14 @@ export function ChatWidget() {
     <Box
       sx={{
         position: "fixed",
-        bottom: { xs: 16, md: 24 },
-        right: { xs: 16, md: 24 },
+        bottom: { xs: 12, md: 20 },
+        left: "50%",
+        transform: "translateX(-50%)",
         zIndex: (theme) => theme.zIndex.tooltip + 10,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        px: 2,
       }}
     >
       {open && (
@@ -106,7 +110,7 @@ export function ChatWidget() {
           elevation={6}
           sx={{
             mb: 1.5,
-            width: { xs: 320, sm: 360, md: 400 },
+            width: { xs: "100%", sm: 360, md: 420 },
             maxHeight: 520,
             display: "flex",
             flexDirection: "column",
@@ -183,7 +187,9 @@ export function ChatWidget() {
                           bgcolor: isUser
                             ? "primary.main"
                             : "rgba(148, 163, 184, 0.18)",
-                          color: isUser ? "primary.contrastText" : "text.primary",
+                          color: isUser
+                            ? "primary.contrastText"
+                            : "text.primary",
                           fontSize: 13,
                           whiteSpace: "pre-wrap",
                         }}
@@ -228,24 +234,103 @@ export function ChatWidget() {
       )}
 
       <Tooltip title={open ? "Tutup chat" : "Buka chat"}>
-        <IconButton
-          color="primary"
+        <Paper
+          elevation={8}
           onClick={handleToggle}
-          sx={{
-            width: 52,
-            height: 52,
-            borderRadius: "50%",
-            boxShadow: 6,
-            bgcolor: "primary.main",
-            "&:hover": {
-              bgcolor: "primary.dark",
-            },
-          }}
+          sx={(theme) => ({
+            cursor: "pointer",
+            px: 2,
+            py: 1,
+            borderRadius: 999,
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            maxWidth: 360,
+            background:
+              theme.palette.mode === "dark"
+                ? "rgba(15,23,42,0.96)"
+                : "linear-gradient(90deg, #ffffff, #e5f2ff)",
+            border:
+              theme.palette.mode === "dark"
+                ? "1px solid rgba(148,163,184,0.4)"
+                : "1px solid rgba(59,130,246,0.35)",
+          })}
         >
-          <ChatBubbleOutlineIcon sx={{ color: "primary.contrastText" }} />
-        </IconButton>
+          <Avatar
+            sx={{
+              width: 30,
+              height: 30,
+              bgcolor: "primary.main",
+              boxShadow: "0 0 0 2px rgba(15,23,42,0.75)",
+            }}
+          >
+            <ChatBubbleOutlineIcon
+              fontSize="small"
+              sx={{ color: "primary.contrastText" }}
+            />
+          </Avatar>
+
+          <Box sx={{ overflow: "hidden" }}>
+            <Typography
+              variant="caption"
+              sx={{
+                fontSize: 11,
+                textTransform: "uppercase",
+                letterSpacing: 0.6,
+                color: "text.secondary",
+              }}
+            >
+              Ask Neuro AI
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+                fontSize: 13,
+                color: (theme) =>
+                  theme.palette.mode === "dark" ? "#e5f0ff" : "#0f172a",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Tanyakan pasar kripto Anda
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              ml: 1,
+              px: 1,
+              py: 0.25,
+              borderRadius: 999,
+              border: "1px solid rgba(148,163,184,0.6)",
+              display: { xs: "none", sm: "flex" },
+              alignItems: "center",
+              gap: 0.5,
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                fontFamily: "monospace",
+                fontSize: 10,
+                color: "text.secondary",
+              }}
+            >
+              Shift
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                fontFamily: "monospace",
+                fontSize: 10,
+                color: "text.secondary",
+              }}
+            >
+              /
+            </Typography>
+          </Box>
+        </Paper>
       </Tooltip>
     </Box>
   );
 }
-

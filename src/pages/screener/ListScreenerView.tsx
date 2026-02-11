@@ -42,8 +42,8 @@ import { useHttp } from "../../hooks/http";
 import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
 import { IScreener } from "../../interfaces/Screener";
-import DeleteIcon from "@mui/icons-material/DeleteOutlined";
 import ModalStyle from "../../components/modal";
+import DeleteIcon from "@mui/icons-material/DeleteOutlined";
 
 /* ============================================================
    Data: baseUrl/screeners
@@ -121,7 +121,7 @@ function NoRowsOverlay({
   );
 }
 
-const SCREENER_PROFILES = ["SCALPING", "SWING", "DAY_TRADING"] as const;
+const SCREENER_PROFILES = ["SCALPING", "SWING", "INVEST"] as const;
 
 function ScreenerToolbar({
   query,
@@ -137,14 +137,20 @@ function ScreenerToolbar({
   loading: boolean;
 }) {
   return (
-    <GridToolbarContainer sx={{ px: 0, py: 0, my: 2 }}>
+    <GridToolbarContainer sx={{ px: 0, py: 0 }}>
       <Stack
         direction={{ xs: "column", md: "row" }}
         spacing={1.25}
         alignItems={{ xs: "stretch", md: "center" }}
         justifyContent="space-between"
       >
-        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          flexWrap="wrap"
+          py={2}
+        >
           <TextField
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
@@ -239,7 +245,7 @@ export default function ListScreenerView() {
   const [coinSearch, setCoinSearch] = useState("");
   const [coinPage, setCoinPage] = useState(1);
   const [coins, setCoins] = useState<CoinItem[]>([]);
-  const [coinsTotal, setCoinsTotal] = useState(0);
+
   const [coinsTotalPages, setCoinsTotalPages] = useState(1);
   const [loadingCoins, setLoadingCoins] = useState(false);
   const [selectedCoin, setSelectedCoin] = useState<CoinItem | null>(null);
@@ -282,19 +288,15 @@ export default function ListScreenerView() {
     try {
       const path = `/markets/coins?search=${encodeURIComponent(debouncedCoinSearch)}&page=${coinPage}&limit=20`;
       const result = await handleGetRequest({ path });
-
       if (result?.items) {
         setCoins(result.items as CoinItem[]);
-        setCoinsTotal(result.totalItems ?? 0);
         setCoinsTotalPages(result.totalPages ?? 1);
       } else {
         setCoins([]);
-        setCoinsTotal(0);
         setCoinsTotalPages(1);
       }
     } catch {
       setCoins([]);
-      setCoinsTotal(0);
       setCoinsTotalPages(1);
     } finally {
       setLoadingCoins(false);
@@ -493,6 +495,7 @@ export default function ListScreenerView() {
         );
       },
     },
+
     {
       field: "actions",
       type: "actions",

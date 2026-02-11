@@ -28,7 +28,7 @@ function App() {
         palette: {
           mode,
           background: {
-            default: mode === "dark" ? "#070A12" : "#FFF5FA",
+            default: mode === "dark" ? "#070A12" : "#FFFFFF",
             paper: mode === "dark" ? "#0E1320" : "#FFFFFF",
           },
         },

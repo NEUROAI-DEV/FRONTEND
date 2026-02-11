@@ -125,7 +125,7 @@ export default function ListMarketView() {
                 Coin Market
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Top coins by market cap
+                Top Trending Coins
               </Typography>
             </Box>
             <Stack direction="row" spacing={1} alignItems="center">

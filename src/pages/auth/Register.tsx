@@ -3,53 +3,50 @@ import {
   Box,
   Button,
   Card,
-  Typography,
   Container,
-  TextField,
-  Divider,
   Stack,
+  TextField,
+  Typography,
 } from "@mui/material";
-import GoogleIcon from "@mui/icons-material/Google";
 import { useNavigate } from "react-router-dom";
 import { useHttp } from "../../hooks/http";
-import { useToken } from "../../hooks/token";
-import { IUserLoginRequestModel } from "../../models/userModel";
 
-export default function LoginView() {
+interface RegisterPayload {
+  userName: string;
+  userEmail: string;
+  userPassword: string;
+}
+
+export default function RegisterView() {
   const { handlePostRequest } = useHttp();
-  const { setToken } = useToken();
   const navigate = useNavigate();
 
+  const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [userPassword, setUserPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
+    if (!userName || !userEmail || !userPassword) return;
     try {
-      const payload: IUserLoginRequestModel = {
+      setSubmitting(true);
+      const payload: RegisterPayload = {
+        userName,
         userEmail,
         userPassword,
       };
 
-      const result = await handlePostRequest({
-        path: "/auth/login/users",
+      const res = await handlePostRequest({
+        path: "/auth/register/users",
         body: payload,
       });
 
-      if (result) {
-        setToken(result.data.accessToken);
-
+      if (res) {
         navigate("/");
-
-        window.location.reload();
       }
-    } catch (error) {
-      console.log(error);
+    } finally {
+      setSubmitting(false);
     }
-  };
-
-  const handleLoginWithGoogle = () => {
-    console.log("Login with Google (dummy)");
-    // nanti arahkan ke OAuth Google
   };
 
   return (
@@ -87,23 +84,27 @@ export default function LoginView() {
           <Stack spacing={1} mb={3} textAlign="center">
             <Typography
               variant="overline"
-              sx={{
-                letterSpacing: 2,
-                color: "text.secondary",
-              }}
+              sx={{ letterSpacing: 2, color: "text.secondary" }}
             >
               NEURO AI
             </Typography>
             <Typography variant="h4" fontWeight={800}>
-              Welcome back
+              Create account
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Masuk untuk mengakses dashboard dan fitur Neuro AI.
+              Daftar untuk mulai menggunakan Neuro AI.
             </Typography>
           </Stack>
 
           {/* Form */}
           <Stack spacing={2}>
+            <TextField
+              label="Nama lengkap"
+              value={userName}
+              size="medium"
+              fullWidth
+              onChange={(e) => setUserName(e.target.value)}
+            />
             <TextField
               label="E-mail"
               value={userEmail}
@@ -113,14 +114,13 @@ export default function LoginView() {
               autoComplete="email"
               onChange={(e) => setUserEmail(e.target.value)}
             />
-
             <TextField
               label="Password"
               value={userPassword}
               size="medium"
               type="password"
               fullWidth
-              autoComplete="current-password"
+              autoComplete="new-password"
               onChange={(e) => setUserPassword(e.target.value)}
             />
 
@@ -134,35 +134,12 @@ export default function LoginView() {
                 borderRadius: 2,
                 py: 1.2,
               }}
+              disabled={submitting}
               onClick={handleSubmit}
             >
-              Login
+              {submitting ? "Mendaftarkan..." : "Daftar"}
             </Button>
           </Stack>
-
-          {/* Divider */}
-          <Divider sx={{ my: 3 }}>
-            <Typography variant="body2" color="text.secondary">
-              OR
-            </Typography>
-          </Divider>
-
-          {/* Google Login */}
-          <Button
-            fullWidth
-            size="large"
-            variant="outlined"
-            startIcon={<GoogleIcon />}
-            sx={{
-              borderRadius: 2,
-              py: 1.2,
-              fontWeight: 600,
-              textTransform: "none",
-            }}
-            onClick={handleLoginWithGoogle}
-          >
-            Login with Google
-          </Button>
 
           {/* Footer link */}
           <Stack
@@ -172,7 +149,7 @@ export default function LoginView() {
             sx={{ mt: 3 }}
           >
             <Typography variant="body2" color="text.secondary">
-              Belum punya akun?
+              Sudah punya akun?
             </Typography>
             <Typography
               variant="body2"
@@ -181,9 +158,9 @@ export default function LoginView() {
                 cursor: "pointer",
                 color: "primary.main",
               }}
-              onClick={() => navigate("/register")}
+              onClick={() => navigate("/login")}
             >
-              Daftar sekarang
+              Login di sini
             </Typography>
           </Stack>
         </Card>

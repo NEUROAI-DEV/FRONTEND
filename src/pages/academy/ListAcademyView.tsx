@@ -198,7 +198,6 @@ export default function ListAcademyView() {
                           transition:
                             "box-shadow 0.2s ease, transform 0.2s ease",
                           "&:hover": {
-                            boxShadow: 4,
                             transform: "translateY(-2px)",
                           },
                         }}
