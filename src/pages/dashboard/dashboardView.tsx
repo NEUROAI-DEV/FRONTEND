@@ -8,7 +8,6 @@ import {
   IconButton,
   useTheme,
   Divider,
-  LinearProgress,
   Chip,
   Alert,
   CircularProgress,
@@ -17,11 +16,15 @@ import {
   ListItemIcon,
   ListItemText,
 } from "@mui/material";
-import ReactApexChart from "react-apexcharts";
 import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
 import { useHttp } from "../../hooks/http";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
+import { GeckoCoinItem } from "../../interfaces/Market";
+
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+import { formatUSD } from "../../utilities/convertNumberToCurrency";
 
 /* ================= API: baseUrl/markets/daily-summary ================= */
 interface DailySummaryData {
@@ -54,6 +57,27 @@ const DashboardView = () => {
   const [dailySummaryError, setDailySummaryError] = useState<string | null>(
     null,
   );
+
+  const [topCoins, setTopCoins] = useState<GeckoCoinItem[]>([]);
+
+  const fetchTopCoins = async () => {
+    try {
+      const path = `/markets/coins/gecko?vs_currency=usd&order=market_cap_desc&per_page=1&page=1`;
+      const result = await handleGetRequest({ path });
+      if (result?.items) {
+        // API mengembalikan hingga 10 data; simpan semua untuk tampilan horizontal.
+        setTopCoins(result.items as GeckoCoinItem[]);
+      } else {
+        setTopCoins([]);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTopCoins();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,48 +112,6 @@ const DashboardView = () => {
     };
   }, []);
 
-  /* ================= DUMMY DATA ================= */
-
-  const btcPrice = [555, 655, 5980, 6120, 62500, 6180, 6100];
-  const usdIndex = [100, 101, 100.5, 55002, 6030, 1002.3, 101.8];
-
-  const marketTrend = [61000, 61800, 63000, 62500, 64000, 65000, 64800];
-
-  const sentiment = {
-    score: 78,
-    twitter: 82,
-    reddit: 76,
-    news: 42,
-    telegram: 79,
-  };
-
-  const summaryCards = [
-    {
-      title: "BTC Price",
-      value: "$61,245",
-      icon: <IconMenus.token fontSize="large" />,
-      color: "#00E396",
-    },
-    {
-      title: "ETH Price",
-      value: "$3,412",
-      icon: <IconMenus.dashboard fontSize="large" />,
-      color: "#775DD0",
-    },
-    {
-      title: "BNB",
-      value: "$585",
-      icon: <IconMenus.settings fontSize="large" />,
-      color: "#FEB019",
-    },
-    {
-      title: "XRP",
-      value: "$0.52",
-      icon: <IconMenus.academy fontSize="large" />,
-      color: "#008FFB",
-    },
-  ];
-
   return (
     <>
       <BreadCrumberStyle
@@ -142,43 +124,166 @@ const DashboardView = () => {
         ]}
       />
 
-      {/* ================= SUMMARY ================= */}
-      <Grid container spacing={3} mb={3}>
-        {summaryCards.map((item, i) => (
-          <Grid item md={3} sm={6} xs={12} key={i}>
-            <Card
-              sx={{
-                p: 3,
-                borderRadius: 3,
-                // background: "linear-gradient(135deg,#0f172a,#020617)",
-                color: "white",
-              }}
-            >
-              <Stack direction="row" spacing={2} alignItems="center">
-                <IconButton
+      {/* ================= TOP COINS (HORIZONTAL SCROLL) ================= */}
+      <Box
+        sx={{
+          mb: 3,
+          width: "100%",
+          overflowX: "scroll",
+          overflowY: "hidden",
+          pb: 1,
+          WebkitOverflowScrolling: "touch",
+          "&::-webkit-scrollbar": { height: 8 },
+          "&::-webkit-scrollbar-track": {
+            backgroundColor:
+              theme.palette.mode === "dark"
+                ? "rgba(15,23,42,0.5)"
+                : "rgba(0,0,0,0.06)",
+            borderRadius: 999,
+          },
+          "&::-webkit-scrollbar-thumb": {
+            backgroundColor:
+              theme.palette.mode === "dark"
+                ? "rgba(148,163,184,0.5)"
+                : "rgba(148,163,184,0.7)",
+            borderRadius: 999,
+          },
+        }}
+      >
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{
+            minWidth: "max-content",
+            width: "max-content",
+          }}
+        >
+          {topCoins.length > 0 &&
+            topCoins.map((item, i) => {
+              const change = item.price_change_percentage_24h ?? 0;
+              const isUp = change > 0;
+              const isDown = change < 0;
+
+              const changeColor = isUp
+                ? "#00E396"
+                : isDown
+                  ? "#F97373"
+                  : "#9CA3AF";
+
+              return (
+                <Card
+                  key={item.id ?? i}
                   sx={{
-                    bgcolor: `${item.color}33`,
-                    color: item.color,
+                    width: 260,
+                    minWidth: 260,
+                    flexShrink: 0,
+                    p: 2.5,
+                    borderRadius: 3,
+                    border: `1px solid ${
+                      theme.palette.mode === "dark"
+                        ? "rgba(148,163,184,0.28)"
+                        : "rgba(15,23,42,0.08)"
+                    }`,
+                    backgroundColor:
+                      theme.palette.mode === "dark" ? "#020617" : "#FFFFFF",
+                    boxShadow: "none",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1.5,
                   }}
                 >
-                  {item.icon}
-                </IconButton>
-                <Box>
-                  <Typography variant="body2" color="gray">
-                    {item.title}
-                  </Typography>
-                  <Typography variant="h5" fontWeight="bold">
-                    {item.value}
-                  </Typography>
-                </Box>
-              </Stack>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+                  {/* Header row: icon + name + 24h change */}
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    spacing={1.5}
+                  >
+                    <Stack direction="row" spacing={1.25} alignItems="center">
+                      <Box
+                        component="img"
+                        src={item.image}
+                        alt={item.name}
+                        sx={{
+                          width: 26,
+                          height: 26,
+                          borderRadius: "50%",
+                          bgcolor: "background.paper",
+                        }}
+                      />
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                            color:
+                              theme.palette.mode === "dark"
+                                ? "#E5E7EB"
+                                : "#0F172A",
+                          }}
+                        >
+                          {item.name}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ textTransform: "uppercase" }}
+                        >
+                          {item.symbol}
+                        </Typography>
+                      </Box>
+                    </Stack>
+
+                    <Stack spacing={0.25} alignItems="flex-end">
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ fontSize: 11 }}
+                      >
+                        24h
+                      </Typography>
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        {isUp && (
+                          <TrendingUpIcon
+                            sx={{ fontSize: 16, color: changeColor }}
+                          />
+                        )}
+                        {isDown && (
+                          <TrendingDownIcon
+                            sx={{ fontSize: 16, color: changeColor }}
+                          />
+                        )}
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 600, color: changeColor }}
+                        >
+                          {change.toFixed(2)}%
+                        </Typography>
+                      </Stack>
+                    </Stack>
+                  </Stack>
+
+                  {/* Price */}
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontSize: 11 }}
+                    >
+                      Price
+                    </Typography>
+                    <Typography variant="h5" fontWeight={700}>
+                      {formatUSD(item.current_price)}
+                    </Typography>
+                  </Box>
+                </Card>
+              );
+            })}
+        </Stack>
+      </Box>
 
       {/* ================= DAILY MARKET SUMMARY (API) ================= */}
-      <Grid container spacing={3} mb={3}>
+      <Grid container spacing={3} mb={3} maxWidth="100%" mx="auto">
         <Grid item xs={12}>
           <Card sx={{ p: 3, borderRadius: 3 }}>
             <Stack

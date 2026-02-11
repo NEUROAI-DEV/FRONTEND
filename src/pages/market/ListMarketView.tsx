@@ -28,35 +28,8 @@ import Pagination from "@mui/material/Pagination";
 import { useHttp } from "../../hooks/http";
 import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
-
-/* ============================================================
-   API: GET markets/coins/gecko?vs_currency=usd&order=market_cap_desc&per_page=&page=
-   Response: { data: { items, totalItems, currentPage, totalPages } }
-============================================================ */
-interface GeckoCoinItem {
-  id: string;
-  symbol: string;
-  name: string;
-  image: string;
-  current_price: number;
-  market_cap: number;
-  market_cap_rank: number;
-  price_change_percentage_24h: number | null;
-  total_volume: number;
-}
-
-function formatUSD(value: number): string {
-  if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
-  if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
-  if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
-  if (value >= 1e3) return `$${(value / 1e3).toFixed(2)}K`;
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 6,
-  }).format(value);
-}
+import { GeckoCoinItem } from "../../interfaces/Market";
+import { formatUSD } from "../../utilities/convertNumberToCurrency";
 
 export default function ListMarketView() {
   const { handleGetRequest } = useHttp();
