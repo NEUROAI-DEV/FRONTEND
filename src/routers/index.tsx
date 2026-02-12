@@ -3,10 +3,17 @@ import AppLayout from "../layouts/AppLayout";
 import ErrorPage from "../pages/error-page";
 import DashboardView from "../pages/dashboard/dashboardView";
 import LoginView from "../pages/auth/Login";
+import RegisterView from "../pages/auth/Register";
 import ProfileView from "../pages/myProfile/Index";
+import ChatView from "../pages/chat/ChatView";
 import AuthLayout from "../layouts/AuthLayout";
-import ListTokenScreenerView from "../pages/tokenScreener/ListTokenScreenerView";
-// import { useToken } from "../hooks/token";
+import { useToken } from "../hooks/token";
+import ListNewsView from "../pages/news/ListNewsView";
+import DetailNewsView from "../pages/news/DetailNewsView";
+import ListTopSignalsView from "../pages/topSignal/ListTopSignalView";
+import ListScreenerView from "../pages/screener/ListScreenerView";
+import ListAcademyView from "../pages/academy/ListAcademyView";
+import ListMarketView from "../pages/market/ListMarketView";
 
 export default function AppRouters() {
   const routers: { path: string; element: JSX.Element }[] = [];
@@ -19,47 +26,58 @@ export default function AppRouters() {
       path: "/login",
       element: <LoginView />,
     },
+    {
+      path: "/register",
+      element: <RegisterView />,
+    },
   ];
 
-  const mainRouters: { path: string; element: JSX.Element }[] = [];
+  const mainRouters: { path: string; element: JSX.Element }[] = [
+    {
+      path: "/",
+      element: <DashboardView />,
+    },
 
-  const currentUser = "superAdmin";
+    {
+      path: "/top-signals",
+      element: <ListTopSignalsView />,
+    },
 
-  switch (currentUser) {
-    case "superAdmin":
-      mainRouters.push(
-        ...[
-          {
-            path: "/",
-            element: <DashboardView />,
-          },
+    {
+      path: "/news",
+      element: <ListNewsView />,
+    },
+    {
+      path: "/news/:newsId",
+      element: <DetailNewsView />,
+    },
+    {
+      path: "/screeners",
+      element: <ListScreenerView />,
+    },
+    {
+      path: "/academy",
+      element: <ListAcademyView />,
+    },
+    {
+      path: "/markets",
+      element: <ListMarketView />,
+    },
 
-          {
-            path: "/tokens",
-            element: <ListTokenScreenerView />,
-          },
+    //my profile routers
+    {
+      path: "/my-profile",
+      element: <ProfileView />,
+    },
+    {
+      path: "/my-profile/edit/:userId",
+      element: <ProfileView />,
+    },
+  ];
 
-          //my profile routers
-          {
-            path: "/my-profile",
-            element: <ProfileView />,
-          },
-          {
-            path: "/my-profile/edit/:userId",
-            element: <ProfileView />,
-          },
-        ]
-      );
-      break;
-    default:
-      break;
-  }
+  const { getToken } = useToken();
 
-  //   const { getToken } = useToken();
-
-  //   const isAuth = getToken();
-
-  const isAuth = true;
+  const isAuth = getToken();
 
   if (isAuth) {
     routers.push(...mainRouters);
@@ -73,6 +91,10 @@ export default function AppRouters() {
       element: isAuth ? <AppLayout /> : <AuthLayout />,
       errorElement: <ErrorPage />,
       children: routers,
+    },
+    {
+      path: "/chat",
+      element: <ChatView />,
     },
   ]);
 

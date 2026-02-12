@@ -6,29 +6,39 @@ import {
   Avatar,
   Divider,
   Grid,
-  Chip,
   useTheme,
 } from "@mui/material";
 import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
 import { convertTime } from "../../utilities/convertTime";
-
-/* ============================================================
-   DUMMY DATA (sementara)
-============================================================ */
-const dummyProfile = {
-  userName: "Alex Johnson",
-  userRole: "admin",
-  email: "alex.johnson@neuroai.io",
-  createdAt: "2024-01-12T08:20:00Z",
-  lastLogin: "2025-02-15T14:32:00Z",
-};
+import { useHttp } from "../../hooks/http";
+import { useEffect, useState } from "react";
+import { IUser } from "../../interfaces/User";
 
 /* ============================================================
    COMPONENT
 ============================================================ */
 const ProfileView = () => {
   const theme = useTheme();
+
+  const { handleGetRequest } = useHttp();
+
+  const [myProfile, setMyProfile] = useState<IUser>();
+
+  const handleGetMyProfile = async () => {
+    const result = await handleGetRequest({
+      path: "/my-profiles",
+    });
+
+    if (result) {
+      setMyProfile(result);
+    }
+    console.log(result);
+  };
+
+  useEffect(() => {
+    handleGetMyProfile();
+  }, []);
 
   return (
     <Box>
@@ -53,7 +63,6 @@ const ProfileView = () => {
             theme.palette.mode === "dark"
               ? "linear-gradient(135deg, rgba(33,150,243,0.18), rgba(13,17,23,0.9))"
               : "linear-gradient(135deg, rgba(33,150,243,0.12), #FFFFFF)",
-          border: "1px solid",
           borderColor: "divider",
         }}
       >
@@ -69,29 +78,24 @@ const ProfileView = () => {
               bgcolor: "primary.main",
               fontSize: 42,
               fontWeight: 700,
-              boxShadow: `0 0 0 6px ${
-                theme.palette.mode === "dark"
-                  ? "rgba(33,150,243,0.25)"
-                  : "rgba(33,150,243,0.15)"
-              }`,
             }}
           >
-            {dummyProfile.userName.charAt(0)}
+            {myProfile?.userName.charAt(0)}
           </Avatar>
 
           <Box flex={1}>
             <Typography variant="h4" fontWeight={800}>
-              {dummyProfile.userName}
+              {myProfile?.userName ?? "_"}
             </Typography>
 
             <Stack direction="row" spacing={1.5} alignItems="center" mt={1}>
               <Typography color="text.secondary" fontSize={14}>
-                {dummyProfile.email}
+                {myProfile?.userEmail ?? "_"}
               </Typography>
             </Stack>
 
             <Typography color="text.secondary" fontSize={14} mt={1.5}>
-              Bergabung sejak {convertTime(dummyProfile.createdAt)}
+              Bergabung sejak {convertTime(myProfile?.createdAt + "") ?? "_"}
             </Typography>
           </Box>
         </Stack>
@@ -103,7 +107,6 @@ const ProfileView = () => {
           mt: 4,
           p: 4,
           borderRadius: 4,
-          border: "1px solid",
           borderColor: "divider",
           background:
             theme.palette.mode === "dark"
@@ -119,24 +122,24 @@ const ProfileView = () => {
 
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
-            <InfoItem label="Username" value={dummyProfile.userName} />
+            <InfoItem label="Username" value={myProfile?.userName ?? "_"} />
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <InfoItem label="Email" value={dummyProfile.email} />
+            <InfoItem label="Email" value={myProfile?.userEmail ?? "_"} />
           </Grid>
 
           <Grid item xs={12} md={6}>
             <InfoItem
               label="Last Login"
-              value={convertTime(dummyProfile.lastLogin)}
+              value={convertTime(myProfile?.userEmail ?? "_")}
             />
           </Grid>
 
           <Grid item xs={12} md={6}>
             <InfoItem
               label="Account Created"
-              value={convertTime(dummyProfile.createdAt)}
+              value={convertTime(myProfile?.createdAt + "") ?? "_"}
             />
           </Grid>
         </Grid>
@@ -157,8 +160,6 @@ const InfoItem = ({
   value: string;
   highlight?: boolean;
 }) => {
-  const theme = useTheme();
-
   return (
     <Box>
       <Typography color="text.secondary" fontSize={13} mb={0.5}>

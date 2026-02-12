@@ -4,8 +4,6 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { useMemo, useState } from "react";
 import { ColorModeContext } from "./context/colorMode.context";
 
-const primaryColor = "#3B82F6";
-
 function App() {
   const [mode, setMode] = useState<"light" | "dark">(() => {
     return (localStorage.getItem("themeMode") as "light" | "dark") || "light";
@@ -21,7 +19,7 @@ function App() {
         });
       },
     }),
-    []
+    [],
   );
 
   const theme = useMemo(
@@ -29,17 +27,13 @@ function App() {
       createTheme({
         palette: {
           mode,
-          primary: {
-            main: primaryColor,
-            contrastText: "#fff",
-          },
           background: {
-            default: mode === "dark" ? "#070A12" : "#FFF5FA",
+            default: mode === "dark" ? "#070A12" : "#FFFFFF",
             paper: mode === "dark" ? "#0E1320" : "#FFFFFF",
           },
         },
       }),
-    [mode]
+    [mode],
   );
 
   return (
