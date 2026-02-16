@@ -44,6 +44,8 @@ import { IconMenus } from "../../components/icon";
 import { IScreener } from "../../interfaces/Screener";
 import ModalStyle from "../../components/modal";
 import DeleteIcon from "@mui/icons-material/DeleteOutlined";
+import { GeckoCoinItem } from "../../interfaces/Market";
+import { formatUSD } from "../../utilities/convertNumberToCurrency";
 
 /* ============================================================
    Data: baseUrl/screeners
@@ -68,6 +70,7 @@ interface Analysis {
 
 interface ScreenerItem {
   screenerId: number;
+  screenerCoinImage: string;
   screenerUserId: number;
   screenerCoinSymbol: string;
   screenerProfile: string;
@@ -78,6 +81,7 @@ interface ScreenerItem {
 
 interface ScreenerRow {
   id: number;
+  img: string;
   screenerId: number;
   symbol: string;
   profile: string;
@@ -208,6 +212,7 @@ function mapItemToRow(item: ScreenerItem): ScreenerRow {
   const ez = a.entryZone || { buy: "-", sell: "-" };
   return {
     id: item.screenerId,
+    img: item.screenerCoinImage ?? "",
     screenerId: item.screenerId,
     symbol: item.screenerCoinSymbol || a.symbol || "-",
     profile: item.screenerProfile || a.profile || "-",
@@ -244,11 +249,11 @@ export default function ListScreenerView() {
   const [openAddModal, setOpenAddModal] = useState(false);
   const [coinSearch, setCoinSearch] = useState("");
   const [coinPage, setCoinPage] = useState(1);
-  const [coins, setCoins] = useState<CoinItem[]>([]);
+  const [coins, setCoins] = useState<GeckoCoinItem[]>([]);
 
   const [coinsTotalPages, setCoinsTotalPages] = useState(1);
   const [loadingCoins, setLoadingCoins] = useState(false);
-  const [selectedCoin, setSelectedCoin] = useState<CoinItem | null>(null);
+  const [selectedCoin, setSelectedCoin] = useState<GeckoCoinItem | null>(null);
   const [selectedProfile, setSelectedProfile] =
     useState<(typeof SCREENER_PROFILES)[number]>("SCALPING");
   const [saving, setSaving] = useState(false);
@@ -286,10 +291,10 @@ export default function ListScreenerView() {
   const fetchCoins = async () => {
     setLoadingCoins(true);
     try {
-      const path = `/markets/coins?search=${encodeURIComponent(debouncedCoinSearch)}&page=${coinPage}&limit=20`;
+      const path = `/markets/coins/gecko?vs_currency=usd&order=market_cap_desc&search=${encodeURIComponent(debouncedCoinSearch)}&page=${coinPage}&per_page=20`;
       const result = await handleGetRequest({ path });
       if (result?.items) {
-        setCoins(result.items as CoinItem[]);
+        setCoins(result.items as GeckoCoinItem[]);
         setCoinsTotalPages(result.totalPages ?? 1);
       } else {
         setCoins([]);
@@ -331,6 +336,7 @@ export default function ListScreenerView() {
         body: {
           screenerCoinSymbol: selectedCoin.symbol,
           screenerProfile: selectedProfile,
+          screenerCoinImage: selectedCoin.image ?? "",
         },
       });
       handleCloseAddModal();
@@ -350,6 +356,8 @@ export default function ListScreenerView() {
         size: paginationModel.pageSize,
         filter: debouncedQuery ? { search: debouncedQuery } : undefined,
       });
+
+      console.log(result);
 
       if (result?.items) {
         const rows = (result.items as ScreenerItem[]).map(mapItemToRow);
@@ -377,11 +385,21 @@ export default function ListScreenerView() {
       headerName: "Symbol",
       flex: 1,
       minWidth: 120,
-      renderCell: (params) => (
-        <Typography fontWeight={700} sx={{ letterSpacing: 0.3 }}>
-          {String(params.value ?? "").toUpperCase()}
-        </Typography>
-      ),
+      renderCell: (params) => {
+        return (
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            <Box
+              component="img"
+              src={params.row.img ?? ""}
+              alt={String(params.value ?? "").toUpperCase()}
+              sx={{ width: 24, height: 24, borderRadius: "50%" }}
+            />
+            <Typography fontWeight={700} sx={{ letterSpacing: 0.3 }}>
+              {String(params.value ?? "").toUpperCase()}{" "}
+            </Typography>
+          </Stack>
+        );
+      },
     },
     {
       field: "profile",
@@ -460,12 +478,6 @@ export default function ListScreenerView() {
       headerName: "Take Profit",
       flex: 0.7,
       minWidth: 90,
-    },
-    {
-      field: "createdAt",
-      headerName: "Created At",
-      flex: 0.9,
-      minWidth: 160,
     },
     {
       field: "reasoning",
@@ -673,18 +685,93 @@ export default function ListScreenerView() {
                         borderRadius: 1,
                       }}
                     >
-                      {coins.map((coin) => (
-                        <ListItemButton
-                          key={coin.symbol}
-                          selected={selectedCoin?.symbol === coin.symbol}
-                          onClick={() => setSelectedCoin(coin)}
-                        >
-                          <ListItemText
-                            primary={coin.symbol}
-                            secondary={coin.baseAsset}
-                          />
-                        </ListItemButton>
-                      ))}
+                      {coins.map((coin) => {
+                        const change24 =
+                          coin.price_change_percentage_24h ?? 0.0;
+                        const isPositive = change24 >= 0;
+                        return (
+                          <ListItemButton
+                            key={coin.symbol}
+                            selected={selectedCoin?.symbol === coin.symbol}
+                            onClick={() => setSelectedCoin(coin)}
+                          >
+                            <Stack
+                              direction="row"
+                              spacing={1.5}
+                              alignItems="center"
+                            >
+                              <Box
+                                component="img"
+                                src={coin.image ?? ""}
+                                alt={coin.symbol ?? ""}
+                                sx={{
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: "50%",
+                                  objectFit: "cover",
+                                }}
+                              />
+                              <Stack>
+                                <Typography fontWeight={700}>
+                                  {coin.symbol}
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  {coin.name ?? coin.symbol}
+                                </Typography>
+                              </Stack>
+                              <Stack
+                                direction="row"
+                                spacing={0.5}
+                                alignItems="center"
+                              >
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  price: {formatUSD(coin.current_price)}
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  volume: {formatUSD(coin.total_volume)}
+                                </Typography>
+                              </Stack>
+                              <Stack
+                                direction="row"
+                                spacing={0.5}
+                                alignItems="center"
+                                justifyContent="flex-end"
+                              >
+                                {isPositive ? (
+                                  <TrendingUpIcon
+                                    fontSize="small"
+                                    color="success"
+                                  />
+                                ) : (
+                                  <TrendingDownIcon
+                                    fontSize="small"
+                                    color="error"
+                                  />
+                                )}
+                                <Typography
+                                  variant="body2"
+                                  fontWeight={600}
+                                  color={
+                                    isPositive ? "success.main" : "error.main"
+                                  }
+                                >
+                                  {isPositive ? "+" : ""}
+                                  {change24.toFixed(2)}%
+                                </Typography>
+                              </Stack>
+                            </Stack>
+                          </ListItemButton>
+                        );
+                      })}
                     </List>
                     {coinsTotalPages > 1 && (
                       <Stack alignItems="center" sx={{ mt: 1.5 }}>
