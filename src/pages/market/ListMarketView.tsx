@@ -48,6 +48,7 @@ export default function ListMarketView() {
       const path = `/markets/coins/gecko?vs_currency=usd&order=market_cap_desc&per_page=${perPage}&page=${page}`;
       const result = await handleGetRequest({ path });
       if (result?.items) {
+        console.log(result.items);
         setItems(result.items as GeckoCoinItem[]);
         setTotalPages(Math.max(1, result.totalPages ?? 1));
       } else {

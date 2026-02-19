@@ -377,6 +377,8 @@ export default function AppLayout() {
         component="main"
         sx={{
           flexGrow: 1,
+          minWidth: 0,
+          overflow: "hidden",
           p: { xs: 2, sm: 2.5, md: 3 },
         }}
       >
@@ -384,12 +386,16 @@ export default function AppLayout() {
 
         <Box
           sx={{
+            width: "100%",
+            maxWidth: "100%",
             background: t.surface,
             p: { xs: 2, sm: 2.5, md: 3 },
             minHeight: {
               xs: "calc(100vh - 96px)",
               md: "calc(100vh - 110px)",
             },
+            minWidth: 0,
+            overflow: "hidden",
           }}
         >
           {isLoading ? (

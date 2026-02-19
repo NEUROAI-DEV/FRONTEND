@@ -15,7 +15,9 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
+  Button,
 } from "@mui/material";
+import { Link } from "react-router-dom";
 import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
 import { useHttp } from "../../hooks/http";
@@ -113,7 +115,7 @@ const DashboardView = () => {
   }, []);
 
   return (
-    <>
+    <Box sx={{ width: "100%", minWidth: 0, overflow: "hidden" }}>
       <BreadCrumberStyle
         navigation={[
           {
@@ -283,6 +285,17 @@ const DashboardView = () => {
             })}
         </Stack>
       </Box>
+      <Stack direction="row" justifyContent="flex-end" sx={{ mb: 3 }}>
+        <Button
+          component={Link}
+          to="/markets"
+          variant="outlined"
+          size="small"
+          sx={{ textTransform: "none" }}
+        >
+          View all
+        </Button>
+      </Stack>
 
       {/* ================= DAILY MARKET SUMMARY (API) ================= */}
       <Grid container spacing={3} mb={3} maxWidth="100%" mx="auto">
@@ -383,7 +396,7 @@ const DashboardView = () => {
           )}
         </Grid>
       </Grid>
-    </>
+    </Box>
   );
 };
 
