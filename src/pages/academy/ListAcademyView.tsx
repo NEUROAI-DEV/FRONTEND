@@ -26,6 +26,7 @@ import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
 import { CONFIGS } from "../../configs";
 import { getImageUrl } from "../../utilities/getImageUrl";
+import { useNavigate } from "react-router-dom";
 
 /* ============================================================
    API: baseUrl/articles
@@ -50,6 +51,7 @@ export default function ListAcademyView() {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query.trim()), 400);
@@ -208,7 +210,9 @@ export default function ListAcademyView() {
                             alignItems: "stretch",
                           }}
                           component="a"
-                          href={`/academy/${article.articleId}`}
+                          onClick={() =>
+                            navigate(`/academy/${article.articleId}`)
+                          }
                         >
                           <CardMedia
                             component="img"

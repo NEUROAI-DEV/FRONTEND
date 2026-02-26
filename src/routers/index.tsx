@@ -1,4 +1,8 @@
-import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import {
+  RouterProvider,
+  createBrowserRouter,
+  Navigate,
+} from "react-router-dom";
 import AppLayout from "../layouts/AppLayout";
 import ErrorPage from "../pages/error-page";
 import DashboardView from "../pages/dashboard/dashboardView";
@@ -13,36 +17,30 @@ import DetailNewsView from "../pages/news/DetailNewsView";
 import ListTopSignalsView from "../pages/topSignal/ListTopSignalView";
 import ListScreenerView from "../pages/screener/ListScreenerView";
 import ListAcademyView from "../pages/academy/ListAcademyView";
+import DetailAcademyView from "../pages/academy/DetailAcademyView";
 import ListMarketView from "../pages/market/ListMarketView";
 
-export default function AppRouters() {
-  const routers: { path: string; element: JSX.Element }[] = [];
-  const authRouters: { path: string; element: JSX.Element }[] = [
-    {
-      path: "/",
-      element: <LoginView />,
-    },
-    {
-      path: "/login",
-      element: <LoginView />,
-    },
-    {
-      path: "/register",
-      element: <RegisterView />,
-    },
-  ];
+function RequireAuth({ children }: { children: JSX.Element }) {
+  const { getToken } = useToken();
+  const isAuth = getToken();
 
-  const mainRouters: { path: string; element: JSX.Element }[] = [
+  if (!isAuth) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+export default function AppRouters() {
+  const appChildRoutes: { path: string; element: JSX.Element }[] = [
     {
       path: "/",
       element: <DashboardView />,
     },
-
     {
       path: "/top-signals",
       element: <ListTopSignalsView />,
     },
-
     {
       path: "/news",
       element: <ListNewsView />,
@@ -52,45 +50,62 @@ export default function AppRouters() {
       element: <DetailNewsView />,
     },
     {
-      path: "/screeners",
-      element: <ListScreenerView />,
-    },
-    {
       path: "/academy",
       element: <ListAcademyView />,
+    },
+    {
+      path: "/academy/:articleId",
+      element: <DetailAcademyView />,
     },
     {
       path: "/markets",
       element: <ListMarketView />,
     },
-
-    //my profile routers
+    {
+      path: "/screeners",
+      element: (
+        <RequireAuth>
+          <ListScreenerView />
+        </RequireAuth>
+      ),
+    },
     {
       path: "/my-profile",
-      element: <ProfileView />,
+      element: (
+        <RequireAuth>
+          <ProfileView />
+        </RequireAuth>
+      ),
     },
     {
       path: "/my-profile/edit/:userId",
-      element: <ProfileView />,
+      element: (
+        <RequireAuth>
+          <ProfileView />
+        </RequireAuth>
+      ),
     },
   ];
-
-  const { getToken } = useToken();
-
-  const isAuth = getToken();
-
-  if (isAuth) {
-    routers.push(...mainRouters);
-  } else {
-    routers.push(...authRouters);
-  }
 
   const appRouters = createBrowserRouter([
     {
       path: "/",
-      element: isAuth ? <AppLayout /> : <AuthLayout />,
+      element: <AppLayout />,
       errorElement: <ErrorPage />,
-      children: routers,
+      children: appChildRoutes,
+    },
+    {
+      element: <AuthLayout />,
+      children: [
+        {
+          path: "/login",
+          element: <LoginView />,
+        },
+        {
+          path: "/register",
+          element: <RegisterView />,
+        },
+      ],
     },
     {
       path: "/chat",

@@ -37,7 +37,7 @@ export default function ListMarketView() {
   const [items, setItems] = useState<GeckoCoinItem[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(20);
+  const [size, setSize] = useState(50);
   const [query, setQuery] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -45,10 +45,11 @@ export default function ListMarketView() {
     setLoading(true);
     setErrorMessage(null);
     try {
-      const path = `/markets/coins/gecko?vs_currency=usd&order=market_cap_desc&per_page=${perPage}&page=${page}`;
+      const path = `/markets/coins/gecko?vs_currency=usd&order=market_cap_desc&page=${page}&size=${size}`;
+
       const result = await handleGetRequest({ path });
+
       if (result?.items) {
-        console.log(result.items);
         setItems(result.items as GeckoCoinItem[]);
         setTotalPages(Math.max(1, result.totalPages ?? 1));
       } else {
@@ -64,7 +65,7 @@ export default function ListMarketView() {
 
   useEffect(() => {
     fetchCoins();
-  }, [page, perPage]);
+  }, [page, size]);
 
   const filteredItems = query.trim()
     ? items.filter(
@@ -120,15 +121,14 @@ export default function ListMarketView() {
               <FormControl size="small" sx={{ minWidth: 100 }}>
                 <InputLabel>Per page</InputLabel>
                 <Select
-                  value={perPage}
+                  value={size}
                   label="Per page"
                   onChange={(e) => {
-                    setPerPage(Number(e.target.value));
+                    setSize(Number(e.target.value));
                     setPage(1);
                   }}
                 >
                   <MenuItem value={10}>10</MenuItem>
-                  <MenuItem value={20}>20</MenuItem>
                   <MenuItem value={50}>50</MenuItem>
                   <MenuItem value={100}>100</MenuItem>
                 </Select>
@@ -157,7 +157,7 @@ export default function ListMarketView() {
                 <TableHead>
                   <TableRow>
                     <TableCell align="center" sx={{ fontWeight: 700 }}>
-                      #
+                      Rank
                     </TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Coin</TableCell>
                     <TableCell align="right" sx={{ fontWeight: 700 }}>
