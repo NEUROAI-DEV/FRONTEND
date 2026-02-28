@@ -64,7 +64,7 @@ const DashboardView = () => {
 
   const fetchTopCoins = async () => {
     try {
-      const path = `/markets/coins/gecko?vs_currency=usd&order=market_cap_desc&per_page=1&page=1`;
+      const path = `/markets/coins/gecko?vs_currency=usd&order=market_cap_desc&size=5&page=1`;
       const result = await handleGetRequest({ path });
       if (result?.items) {
         // API mengembalikan hingga 10 data; simpan semua untuk tampilan horizontal.
@@ -193,7 +193,7 @@ const DashboardView = () => {
                     boxShadow: "none",
                     display: "flex",
                     flexDirection: "column",
-                    gap: 1.5,
+                    // gap: 1.5,
                   }}
                 >
                   {/* Header row: icon + name + 24h change */}
