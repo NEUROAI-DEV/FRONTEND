@@ -18,6 +18,7 @@ import ListTopSignalsView from "../pages/topSignal/ListTopSignalView";
 import ListScreenerView from "../pages/screener/ListScreenerView";
 import ListTrendingView from "../pages/screener/ListTrendingView";
 import ListMarketTrendView from "../pages/screener/ListMarketTrendView";
+import ListScreenerMarketView from "../pages/screener/ListMarketView";
 import ListAcademyView from "../pages/academy/ListAcademyView";
 import DetailAcademyView from "../pages/academy/DetailAcademyView";
 import ListMarketView from "../pages/market/ListMarketView";
@@ -82,6 +83,10 @@ export default function AppRouters() {
     {
       path: "/screeners/market-trend",
       element: <ListMarketTrendView />,
+    },
+    {
+      path: "/screeners/market",
+      element: <ListScreenerMarketView />,
     },
     {
       path: "/my-profile",
