@@ -37,14 +37,14 @@ import { Link, Outlet, useNavigate } from "react-router-dom";
 
 import { useAppContext } from "../context/app.context";
 import { useToken } from "../hooks/token";
-import { IconMenus } from "../components/icon";
+import { IconMenusSidebar } from "../components/icon";
 import { ColorModeContext } from "../context/colorMode.context";
 import { ChatWidget } from "../components/chat/ChatWidget";
 
 /* ============================================================
    GLOBAL DESIGN TOKENS (MODE AWARE)
 ============================================================ */
-const drawerWidth = 200;
+const drawerWidth = 170;
 const miniDrawerWidth = 64;
 
 const primaryBlue = "#3B82F6";
@@ -59,8 +59,8 @@ const tokens = {
       "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(15,23,42,0.96))",
     border: "rgba(148,163,184,0.28)",
     hover: "rgba(15,23,42,0.9)",
-    textPrimary: "#E5E7EB",
-    textSecondary: "#9CA3AF",
+    textPrimary: "#FFFFFF",
+    textSecondary: "#FFFFFF",
   },
 
   light: {
@@ -164,56 +164,14 @@ export default function AppLayout() {
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
   const [activeLink, setActiveLink] = useState("/");
 
-  // const { getCredential } = useCredential();
-
   const menuItems = [
-    { title: "Dashboard", link: "/", icon: <IconMenus.dashboard /> },
-    {
-      title: "Markets",
-      link: "/markets",
-      icon: <IconMenus.trend />,
-    },
-    {
-      title: "Top Signals",
-      link: "/top-signals",
-      icon: <IconMenus.token />,
-    },
-    {
-      title: "Screeners",
-      link: "/screeners",
-      icon: <IconMenus.screener />,
-    },
-    { title: "News", link: "/news", icon: <IconMenus.news /> },
-
-    { title: "Academy", link: "/academy", icon: <IconMenus.academy /> },
-    // {
-    //   title: "Support",
-    //   link: "/transactions",
-    //   icon: <IconMenus.support />,
-    // },
-    { title: "Profile", link: "/my-profile", icon: <IconMenus.profile /> },
+    { title: "Summary", link: "/", iconKey: "dashboard" as const },
+    { title: "Watch List", link: "/watch-list", iconKey: "watchList" as const },
+    { title: "Screeners", link: "/screeners", iconKey: "screener" as const },
+    { title: "News", link: "/news", iconKey: "news" as const },
+    { title: "Academy", link: "/academy", iconKey: "academy" as const },
+    { title: "Profile", link: "/my-profile", iconKey: "profile" as const },
   ];
-
-  // if (userCredential !== null) {
-  //   switch (userCredential?.user?.userRole.toUpperCase()) {
-  //     case "ADMIN":
-  //       menuItems.push(...adminMenus);
-  //       break;
-  //     case "SUPERADMIN":
-  //       menuItems.push(...superAdminMenus);
-  //       break;
-  //     default:
-  //       break;
-  //   }
-
-  //   menuItems.push({
-  //     title: "Profile",
-  //     link: "/my-profiles",
-  //     icon: <IconMenus.profile />,
-  //   });
-  // } else {
-  //   console.error("token doesn't exist or invalid");
-  // }
 
   useEffect(() => {
     const saved = localStorage.getItem("activeSidebarLink");
@@ -336,7 +294,7 @@ export default function AppLayout() {
                 key={item.link}
                 disablePadding
                 sx={{
-                  mb: 0.8,
+                  mb: 0.2,
                   borderRadius: 2.5,
                   background: active ? "rgba(59,130,246,0.12)" : "transparent",
                   "&:hover": {
@@ -356,12 +314,17 @@ export default function AppLayout() {
                       color: active ? primaryBlue : t.textSecondary,
                     }}
                   >
-                    {item.icon}
+                    {(() => {
+                      const { outline: OutlineIcon, fill: FillIcon } =
+                        IconMenusSidebar[item.iconKey];
+                      const Icon = active ? OutlineIcon : FillIcon;
+                      return <Icon />;
+                    })()}
                   </ListItemIcon>
                   <ListItemText
                     primary={item.title}
                     sx={{
-                      fontWeight: active ? 700 : 500,
+                      fontWeight: active ? 900 : 700,
                       color: active ? t.textPrimary : t.textSecondary,
                     }}
                   />
@@ -379,7 +342,6 @@ export default function AppLayout() {
           flexGrow: 1,
           minWidth: 0,
           overflow: "hidden",
-          p: { xs: 2, sm: 2.5, md: 3 },
         }}
       >
         <DrawerHeader />
@@ -389,7 +351,7 @@ export default function AppLayout() {
             width: "100%",
             maxWidth: "100%",
             background: t.surface,
-            p: { xs: 2, sm: 2.5, md: 3 },
+            p: { xs: 2, sm: 2.5, md: 1 },
             minHeight: {
               xs: "calc(100vh - 96px)",
               md: "calc(100vh - 110px)",

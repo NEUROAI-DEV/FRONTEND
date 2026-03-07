@@ -7,7 +7,6 @@ import {
   Button,
   Chip,
   CircularProgress,
-  IconButton,
   Paper,
   Stack,
   Tab,
@@ -18,16 +17,12 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import Pagination from "@mui/material/Pagination";
 import { useHttp } from "../../hooks/http";
-import BreadCrumberStyle from "../../components/breadcrumb/Index";
-import { IconMenus } from "../../components/icon";
 import { formatUSD } from "../../utilities/convertNumberToCurrency";
 
 /* ============================================================
@@ -140,7 +135,6 @@ export default function ListScreenerView() {
   };
 
   const fetchTrending = async () => {
-    setLoadingTrending(true);
     setErrorTrending(null);
     setSubscriptionRequired(false);
     try {
@@ -180,7 +174,6 @@ export default function ListScreenerView() {
   };
 
   const fetchMarketTrend = async (category: "gainers" | "losers") => {
-    setLoadingMarket(true);
     setErrorMarket(null);
     setSubscriptionRequired(false);
     try {
@@ -222,7 +215,6 @@ export default function ListScreenerView() {
   }, [tab, trendingPage]);
 
   const fetchMarketsTab = async () => {
-    setLoadingMarkets(true);
     setErrorMarkets(null);
     setSubscriptionRequired(false);
     try {
@@ -268,18 +260,24 @@ export default function ListScreenerView() {
     if (tab === "market") fetchMarketsTab();
   }, [tab, marketsPage]);
 
+  // Auto-refresh data every 30 seconds for realtime updates
+  const REFRESH_INTERVAL_MS = 10 * 1000;
+  useEffect(() => {
+    if (subscriptionRequired) return;
+    const interval = setInterval(() => {
+      if (tab === "trending") fetchTrending();
+      else if (tab === "gainers") fetchMarketTrend("gainers");
+      else if (tab === "losers") fetchMarketTrend("losers");
+      else if (tab === "market") fetchMarketsTab();
+    }, REFRESH_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [tab, subscriptionRequired, trendingPage, marketPage, marketsPage]);
+
   const handleTabChange = (_: React.SyntheticEvent, newTab: TabValue) => {
     setTab(newTab);
     if (newTab === "trending") setTrendingPage(1);
     else if (newTab === "market") setMarketsPage(1);
     else setMarketPage(1);
-  };
-
-  const handleRefresh = () => {
-    if (tab === "trending") fetchTrending();
-    else if (tab === "gainers") fetchMarketTrend("gainers");
-    else if (tab === "losers") fetchMarketTrend("losers");
-    else if (tab === "market") fetchMarketsTab();
   };
 
   const loading =
@@ -304,15 +302,6 @@ export default function ListScreenerView() {
   if (subscriptionRequired) {
     return (
       <Box sx={{ pb: 2 }}>
-        <BreadCrumberStyle
-          navigation={[
-            {
-              label: "Screeners",
-              link: "/screeners",
-              icon: <IconMenus.screener fontSize="small" />,
-            },
-          ]}
-        />
         <Paper
           variant="outlined"
           sx={{
@@ -355,16 +344,6 @@ export default function ListScreenerView() {
 
   return (
     <Box sx={{ pb: 2, width: "100%", minWidth: 0 }}>
-      <BreadCrumberStyle
-        navigation={[
-          {
-            label: "Screeners",
-            link: "/screeners",
-            icon: <IconMenus.screener fontSize="small" />,
-          },
-        ]}
-      />
-
       <Paper
         variant="outlined"
         sx={{
@@ -374,57 +353,6 @@ export default function ListScreenerView() {
           overflow: "hidden",
         }}
       >
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          alignItems={{ xs: "flex-start", sm: "center" }}
-          justifyContent="space-between"
-          spacing={2}
-          sx={{
-            px: { xs: 2, md: 2.5 },
-            py: 2,
-            borderBottom: `1px solid ${borderColor}`,
-          }}
-        >
-          <Box>
-            <Typography
-              variant="h5"
-              fontWeight={800}
-              sx={{
-                letterSpacing: "-0.02em",
-                color: "text.primary",
-                fontFamily: "inherit",
-              }}
-            >
-              Screeners
-            </Typography>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mt: 0.25 }}
-            >
-              Trending, gainers & losers — data pasar real-time
-            </Typography>
-          </Box>
-          <Tooltip title="Refresh">
-            <span>
-              <IconButton
-                onClick={handleRefresh}
-                disabled={loading}
-                size="small"
-                sx={{
-                  border: `1px solid ${borderColor}`,
-                  borderRadius: 1.5,
-                  "&:hover": {
-                    bgcolor: isDark ? "rgba(148,163,184,0.08)" : "action.hover",
-                  },
-                }}
-              >
-                <RefreshIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-        </Stack>
-
         <Tabs
           value={tab}
           onChange={handleTabChange}
