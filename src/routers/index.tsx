@@ -61,13 +61,17 @@ export default function AppRouters() {
       path: "/markets",
       element: <ListMarketView />,
     },
+    // {
+    //   path: "/screeners",
+    //   element: (
+    //     <RequireAuth>
+    //       <ListScreenerView />
+    //     </RequireAuth>
+    //   ),
+    // },
     {
       path: "/screeners",
-      element: (
-        <RequireAuth>
-          <ListScreenerView />
-        </RequireAuth>
-      ),
+      element: <ListScreenerView />,
     },
     {
       path: "/my-profile",
