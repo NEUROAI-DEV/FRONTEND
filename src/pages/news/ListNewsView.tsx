@@ -6,6 +6,7 @@ import {
   Button,
   Chip,
   Divider,
+  Grid,
   IconButton,
   InputAdornment,
   Pagination,
@@ -285,7 +286,7 @@ export default function ListNewsView() {
               subtitle="Try adjusting your date range or search keyword."
             />
           ) : (
-            <Stack spacing={1.5} sx={{ mt: 2 }}>
+            <Grid container spacing={2} sx={{ mt: 2 }}>
               {tableData.map((row: any) => {
                 const publishedAt =
                   convertTime(row?.newsPublishedAt) || "Unknown date";
@@ -311,88 +312,91 @@ export default function ListNewsView() {
                 }
 
                 return (
-                  <Paper
-                    key={row?.newsId}
-                    variant="outlined"
-                    sx={{
-                      p: 1.5,
-                      borderRadius: 2,
-                      borderColor: "divider",
-                      transition:
-                        "box-shadow 0.2s ease, border-color 0.2s ease",
-                      "&:hover": {
-                        boxShadow: 2,
-                        borderColor: "primary.light",
-                      },
-                    }}
-                  >
-                    <Stack spacing={1}>
-                      <Stack
-                        direction="row"
-                        alignItems="flex-start"
-                        justifyContent="space-between"
-                        spacing={1}
-                      >
+                  <Grid item xs={12} md={6} key={row?.newsId}>
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 1.5,
+                        height: "100%",
+                        borderRadius: 2,
+                        borderColor: "divider",
+                        transition:
+                          "box-shadow 0.2s ease, border-color 0.2s ease",
+                        "&:hover": {
+                          boxShadow: 2,
+                          borderColor: "primary.light",
+                        },
+                      }}
+                    >
+                      <Stack spacing={1} sx={{ height: "100%" }}>
+                        <Stack
+                          direction="row"
+                          alignItems="flex-start"
+                          justifyContent="space-between"
+                          spacing={1}
+                        >
+                          <Typography
+                            variant="subtitle1"
+                            fontWeight={800}
+                            sx={{
+                              lineHeight: 1.3,
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                            }}
+                          >
+                            {row?.newsTitle || "-"}
+                          </Typography>
+
+                          <Chip
+                            size="small"
+                            label={
+                              sentiment.charAt(0).toUpperCase() +
+                              sentiment.slice(1).toLowerCase()
+                            }
+                            color={sentimentColor}
+                            variant="outlined"
+                          />
+                        </Stack>
+
                         <Typography
-                          variant="subtitle1"
-                          fontWeight={800}
+                          variant="body2"
+                          color="text.secondary"
                           sx={{
-                            lineHeight: 1.3,
                             display: "-webkit-box",
-                            WebkitLineClamp: 2,
+                            WebkitLineClamp: 3,
                             WebkitBoxOrient: "vertical",
                             overflow: "hidden",
                           }}
                         >
-                          {row?.newsTitle || "-"}
+                          {row?.newsDescription || "-"}
                         </Typography>
 
-                        <Chip
-                          size="small"
-                          label={
-                            sentiment.charAt(0).toUpperCase() +
-                            sentiment.slice(1).toLowerCase()
-                          }
-                          color={sentimentColor}
-                          variant="outlined"
-                        />
-                      </Stack>
-
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          display: "-webkit-box",
-                          WebkitLineClamp: 3,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
-                        }}
-                      >
-                        {row?.newsDescription || "-"}
-                      </Typography>
-
-                      <Stack
-                        direction="row"
-                        alignItems="center"
-                        justifyContent="space-between"
-                        spacing={1}
-                      >
-                        <Typography variant="caption" color="text.secondary">
-                          Published at {publishedAt}
-                        </Typography>
-
-                        <Button
-                          size="small"
-                          onClick={() => navigate(`/news/${row?.newsId}`)}
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          justifyContent="space-between"
+                          spacing={1}
+                          sx={{ mt: "auto" }}
                         >
-                          detail
-                        </Button>
+                          <Typography variant="caption" color="text.secondary">
+                            Published at {publishedAt}
+                          </Typography>
+
+                          <Button
+                            size="small"
+                            onClick={() => navigate(`/news/${row?.newsId}`)}
+                          >
+                            detail
+                          </Button>
+                        </Stack>
                       </Stack>
-                    </Stack>
-                  </Paper>
+                    </Paper>
+                  </Grid>
                 );
               })}
-            </Stack>
+            </Grid>
           )}
 
           {rowCount > 0 && (

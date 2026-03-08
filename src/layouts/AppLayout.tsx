@@ -350,8 +350,8 @@ export default function AppLayout() {
           sx={{
             width: "100%",
             maxWidth: "100%",
-            background: t.surface,
             p: { xs: 2, sm: 2.5, md: 1 },
+            mb: 8,
             minHeight: {
               xs: "calc(100vh - 96px)",
               md: "calc(100vh - 110px)",

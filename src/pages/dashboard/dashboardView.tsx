@@ -5,7 +5,6 @@ import {
   Box,
   Stack,
   Typography,
-  IconButton,
   useTheme,
   Divider,
   Chip,
@@ -22,11 +21,11 @@ import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
 import { useHttp } from "../../hooks/http";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
-import { GeckoCoinItem } from "../../interfaces/Market";
 
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { formatUSD } from "../../utilities/convertNumberToCurrency";
+import { ITrendingCoin } from "../../interfaces/Screener";
 
 /* ================= API: baseUrl/markets/daily-summary ================= */
 interface DailySummaryData {
@@ -60,15 +59,17 @@ const DashboardView = () => {
     null,
   );
 
-  const [topCoins, setTopCoins] = useState<GeckoCoinItem[]>([]);
+  const [topCoins, setTopCoins] = useState<ITrendingCoin[]>([]);
 
   const fetchTopCoins = async () => {
     try {
-      const path = `/markets/coins/gecko?vs_currency=usd&order=market_cap_desc&size=5&page=1`;
+      const path = `/screeners?category=trending&page=1&size=5&vs_currency=usd&order=market_cap_desc`;
       const result = await handleGetRequest({ path });
+
+      console.log(result);
+
       if (result?.items) {
-        // API mengembalikan hingga 10 data; simpan semua untuk tampilan horizontal.
-        setTopCoins(result.items as GeckoCoinItem[]);
+        setTopCoins(result.items as ITrendingCoin[]);
       } else {
         setTopCoins([]);
       }
@@ -163,8 +164,9 @@ const DashboardView = () => {
           }}
         >
           {topCoins.length > 0 &&
-            topCoins.map((item, i) => {
-              const change = item.price_change_percentage_24h ?? 0;
+            topCoins.map((coin, i) => {
+              const item = coin.item;
+              const change = item?.data?.price_change_percentage_24h?.usd ?? 0;
               const isUp = change > 0;
               const isDown = change < 0;
 
@@ -206,7 +208,7 @@ const DashboardView = () => {
                     <Stack direction="row" spacing={1.25} alignItems="center">
                       <Box
                         component="img"
-                        src={item.image}
+                        src={item?.thumb ?? ""}
                         alt={item.name}
                         sx={{
                           width: 26,
@@ -277,7 +279,7 @@ const DashboardView = () => {
                       Price
                     </Typography>
                     <Typography variant="h5" fontWeight={700}>
-                      {formatUSD(item.current_price)}
+                      {formatUSD(item.data?.price ?? 0)}
                     </Typography>
                   </Box>
                 </Card>

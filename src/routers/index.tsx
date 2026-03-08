@@ -22,6 +22,7 @@ import ListScreenerMarketView from "../pages/screener/ListMarketView";
 import ListAcademyView from "../pages/academy/ListAcademyView";
 import DetailAcademyView from "../pages/academy/DetailAcademyView";
 import ListMarketView from "../pages/market/ListMarketView";
+import ListWatchListView from "../pages/watchlist/ListWatchListView";
 
 function RequireAuth({ children }: { children: JSX.Element }) {
   const { getToken } = useToken();
@@ -63,6 +64,14 @@ export default function AppRouters() {
     {
       path: "/markets",
       element: <ListMarketView />,
+    },
+    {
+      path: "/watch-list",
+      element: (
+        <RequireAuth>
+          <ListWatchListView />
+        </RequireAuth>
+      ),
     },
     // {
     //   path: "/screeners",
