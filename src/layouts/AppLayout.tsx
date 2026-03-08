@@ -44,7 +44,7 @@ import { ChatWidget } from "../components/chat/ChatWidget";
 /* ============================================================
    GLOBAL DESIGN TOKENS (MODE AWARE)
 ============================================================ */
-const drawerWidth = 170;
+const drawerWidth = 180;
 const miniDrawerWidth = 64;
 
 const primaryBlue = "#3B82F6";
@@ -168,6 +168,16 @@ export default function AppLayout() {
     { title: "Summary", link: "/", iconKey: "dashboard" as const },
     { title: "Watch List", link: "/watch-list", iconKey: "watchList" as const },
     { title: "Screeners", link: "/screeners", iconKey: "screener" as const },
+    {
+      title: "Live Predict",
+      link: "/live-predict",
+      iconKey: "livePredict" as const,
+    },
+    {
+      title: "Smart Money",
+      link: "/smart-money",
+      iconKey: "smartMoney" as const,
+    },
     { title: "News", link: "/news", iconKey: "news" as const },
     { title: "Academy", link: "/academy", iconKey: "academy" as const },
     { title: "Profile", link: "/my-profile", iconKey: "profile" as const },

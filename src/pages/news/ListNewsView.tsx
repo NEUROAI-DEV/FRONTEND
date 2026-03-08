@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useHttp } from "../../hooks/http";
 import {
   Alert,
+  Avatar,
   Button,
   Chip,
   Divider,
@@ -16,6 +17,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
 import { convertTime } from "../../utilities/convertTime";
@@ -83,9 +85,11 @@ export default function ListNewsView() {
         filter: { search, startDate, endDate },
       });
 
-      if (result && result?.items) {
-        setTableData(result?.items);
-        setRowCount(result.totalItems);
+      const items = result?.data?.items ?? result?.items;
+      const total = result?.data?.totalItems ?? result?.totalItems;
+      if (result && items) {
+        setTableData(items);
+        setRowCount(total ?? 0);
         setLastUpdated(new Date());
       }
     } catch (error: unknown) {
@@ -349,16 +353,62 @@ export default function ListNewsView() {
                             {row?.newsTitle || "-"}
                           </Typography>
 
-                          <Chip
-                            size="small"
-                            label={
-                              sentiment.charAt(0).toUpperCase() +
-                              sentiment.slice(1).toLowerCase()
-                            }
-                            color={sentimentColor}
-                            variant="outlined"
-                          />
+                          <Stack
+                            direction="row"
+                            spacing={0.5}
+                            alignItems="center"
+                            flexShrink={0}
+                          >
+                            {row?.newsSentimentCategory === "TRENDING" ? (
+                              <Chip
+                                size="small"
+                                icon={<TrendingUpIcon sx={{ fontSize: 14 }} />}
+                                label="TRENDING"
+                                color="warning"
+                                variant="filled"
+                                sx={{ fontWeight: 700 }}
+                              />
+                            ) : null}
+                            <Chip
+                              size="small"
+                              label={
+                                sentiment.charAt(0).toUpperCase() +
+                                sentiment.slice(1).toLowerCase()
+                              }
+                              color={sentimentColor}
+                              variant="outlined"
+                            />
+                          </Stack>
                         </Stack>
+
+                        {row?.neswCoinImpact ? (
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={1}
+                            sx={{
+                              py: 0.5,
+                              px: 1,
+                              borderRadius: 1,
+                              bgcolor: "action.hover",
+                            }}
+                          >
+                            <Avatar
+                              src={row.neswCoinImpact.image}
+                              alt={row.neswCoinImpact.name}
+                              sx={{ width: 24, height: 24 }}
+                            />
+                            <Typography variant="body2" fontWeight={600}>
+                              {row.neswCoinImpact.name}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              ({row.neswCoinImpact.symbol?.toUpperCase()})
+                            </Typography>
+                          </Stack>
+                        ) : null}
 
                         <Typography
                           variant="body2"

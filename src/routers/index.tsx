@@ -14,15 +14,15 @@ import AuthLayout from "../layouts/AuthLayout";
 import { useToken } from "../hooks/token";
 import ListNewsView from "../pages/news/ListNewsView";
 import DetailNewsView from "../pages/news/DetailNewsView";
-import ListTopSignalsView from "../pages/topSignal/ListTopSignalView";
 import ListScreenerView from "../pages/screener/ListScreenerView";
 import ListTrendingView from "../pages/screener/ListTrendingView";
 import ListMarketTrendView from "../pages/screener/ListMarketTrendView";
 import ListScreenerMarketView from "../pages/screener/ListMarketView";
 import ListAcademyView from "../pages/academy/ListAcademyView";
 import DetailAcademyView from "../pages/academy/DetailAcademyView";
-import ListMarketView from "../pages/market/ListMarketView";
 import ListWatchListView from "../pages/watchlist/ListWatchListView";
+import ListLivePredictView from "../pages/livePredict/ListLivePredictView";
+import ListSmartMoneyView from "../pages/smartMoney/ListSmartMoneyView";
 
 function RequireAuth({ children }: { children: JSX.Element }) {
   const { getToken } = useToken();
@@ -42,10 +42,6 @@ export default function AppRouters() {
       element: <DashboardView />,
     },
     {
-      path: "/top-signals",
-      element: <ListTopSignalsView />,
-    },
-    {
       path: "/news",
       element: <ListNewsView />,
     },
@@ -60,10 +56,6 @@ export default function AppRouters() {
     {
       path: "/academy/:articleId",
       element: <DetailAcademyView />,
-    },
-    {
-      path: "/markets",
-      element: <ListMarketView />,
     },
     {
       path: "/watch-list",
@@ -96,6 +88,14 @@ export default function AppRouters() {
     {
       path: "/screeners/market",
       element: <ListScreenerMarketView />,
+    },
+    {
+      path: "/live-predict",
+      element: <ListLivePredictView />,
+    },
+    {
+      path: "/smart-money",
+      element: <ListSmartMoneyView />,
     },
     {
       path: "/my-profile",
