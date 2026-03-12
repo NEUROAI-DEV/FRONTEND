@@ -25,6 +25,7 @@ import {
   Alert,
   AlertTitle,
   useMediaQuery,
+  Stack,
 } from "@mui/material";
 import {
   ChevronLeft,
@@ -230,6 +231,43 @@ export default function AppLayout() {
             </Box>
 
             <Box sx={{ flexGrow: 1 }} />
+
+            <Stack
+              direction="row"
+              spacing={3}
+              alignItems="center"
+              sx={{ mr: 5 }}
+            >
+              <Typography
+                variant="body2"
+                sx={{
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  color: "text.secondary",
+                  "&:hover": { color: "text.primary" },
+                }}
+                onClick={() => navigate("/subscription-plans")}
+              >
+                Pricing
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  color: "text.secondary",
+                  "&:hover": { color: "text.primary" },
+                }}
+                onClick={() =>
+                  window.open(
+                    "https://drive.google.com/file/d/1ataxtt3YGB54Pq9yxMb1DBGHPhlV3kLS/view?usp=sharing",
+                    "_blank",
+                  )
+                }
+              >
+                About Us
+              </Typography>
+            </Stack>
 
             <IconButton onClick={toggleColorMode}>
               {theme.palette.mode === "dark" ? <LightMode /> : <DarkMode />}

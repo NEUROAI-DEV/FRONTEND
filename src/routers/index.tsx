@@ -2,7 +2,9 @@ import {
   RouterProvider,
   createBrowserRouter,
   Navigate,
+  useLocation,
 } from "react-router-dom";
+import { useEffect, useState } from "react";
 import AppLayout from "../layouts/AppLayout";
 import ErrorPage from "../pages/error-page";
 import DashboardView from "../pages/dashboard/dashboardView";
@@ -12,6 +14,7 @@ import ProfileView from "../pages/myProfile/Index";
 import ChatView from "../pages/chat/ChatView";
 import AuthLayout from "../layouts/AuthLayout";
 import { useToken } from "../hooks/token";
+import { useHttp } from "../hooks/http";
 import ListNewsView from "../pages/news/ListNewsView";
 import DetailNewsView from "../pages/news/DetailNewsView";
 import ListScreenerView from "../pages/screener/ListScreenerView";
@@ -23,6 +26,7 @@ import DetailAcademyView from "../pages/academy/DetailAcademyView";
 import ListWatchListView from "../pages/watchlist/ListWatchListView";
 import ListLivePredictView from "../pages/livePredict/ListLivePredictView";
 import ListSmartMoneyView from "../pages/smartMoney/ListSmartMoneyView";
+import ListSubscriptionPlanView from "../pages/subscription/ListSubscriptionPlanView";
 
 function RequireAuth({ children }: { children: JSX.Element }) {
   const { getToken } = useToken();
@@ -30,6 +34,53 @@ function RequireAuth({ children }: { children: JSX.Element }) {
 
   if (!isAuth) {
     return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+function RequireActiveSubscription({ children }: { children: JSX.Element }) {
+  const { handleGetRequest } = useHttp();
+  const location = useLocation();
+  const [isAllowed, setIsAllowed] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkSubscription = async () => {
+      try {
+        const result = await handleGetRequest({ path: "/my-profiles" });
+        const data = result?.data ?? result;
+        const status: string | undefined =
+          data?.subscription?.subscriptionStatus;
+
+        const allowed = !!status && status !== "TRIALING";
+
+        if (!cancelled) {
+          setIsAllowed(allowed);
+        }
+      } catch {
+        if (!cancelled) {
+          setIsAllowed(false);
+        }
+      }
+    };
+
+    checkSubscription();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [handleGetRequest]);
+
+  if (isAllowed === null) {
+    return null;
+  }
+
+  if (!isAllowed) {
+    return (
+      <Navigate to="/subscription-plans" replace state={{ from: location.pathname }} />
+    );
   }
 
   return children;
@@ -51,7 +102,13 @@ export default function AppRouters() {
     },
     {
       path: "/academy",
-      element: <ListAcademyView />,
+      element: (
+        <RequireAuth>
+          <RequireActiveSubscription>
+            <ListAcademyView />
+          </RequireActiveSubscription>
+        </RequireAuth>
+      ),
     },
     {
       path: "/academy/:articleId",
@@ -96,6 +153,10 @@ export default function AppRouters() {
     {
       path: "/smart-money",
       element: <ListSmartMoneyView />,
+    },
+    {
+      path: "/subscription-plans",
+      element: <ListSubscriptionPlanView />,
     },
     {
       path: "/my-profile",

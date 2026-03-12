@@ -15,8 +15,9 @@ import {
   ListItemIcon,
   ListItemText,
   Button,
+  Avatar,
 } from "@mui/material";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
 import { useHttp } from "../../hooks/http";
@@ -26,6 +27,7 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { formatUSD } from "../../utilities/convertNumberToCurrency";
 import { ITrendingCoin } from "../../interfaces/Screener";
+import { convertTime } from "../../utilities/convertTime";
 
 /* ================= API: baseUrl/markets/daily-summary ================= */
 interface DailySummaryData {
@@ -35,6 +37,21 @@ interface DailySummaryData {
   dailySummaryConfidence?: string;
   dailySummarySummary?: string;
   dailySummaryHighlights?: string[];
+}
+
+interface TrendingNewsItem {
+  newsId: number;
+  newsTitle: string;
+  newsDescription: string | null;
+  newsPublishedAt: string;
+  newsSentiment?: "POSITIVE" | "NEGATIVE" | "NEUTRAL" | string;
+  newsSentimentCategory?: "NORMAL" | "TRENDING" | string;
+  neswCoinImpact?: {
+    id: string;
+    name: string;
+    image: string;
+    symbol: string;
+  } | null;
 }
 
 function getSentimentColor(
@@ -50,6 +67,7 @@ function getSentimentColor(
 const DashboardView = () => {
   const theme = useTheme();
   const { handleGetRequest } = useHttp();
+  const navigate = useNavigate();
 
   const [dailySummary, setDailySummary] = useState<DailySummaryData | null>(
     null,
@@ -60,13 +78,16 @@ const DashboardView = () => {
   );
 
   const [topCoins, setTopCoins] = useState<ITrendingCoin[]>([]);
+  const [trendingNews, setTrendingNews] = useState<TrendingNewsItem[]>([]);
+  const [trendingNewsLoading, setTrendingNewsLoading] = useState(false);
+  const [trendingNewsError, setTrendingNewsError] = useState<string | null>(
+    null,
+  );
 
   const fetchTopCoins = async () => {
     try {
       const path = `/screeners?category=trending&page=1&size=5&vs_currency=usd&order=market_cap_desc`;
       const result = await handleGetRequest({ path });
-
-      console.log(result);
 
       if (result?.items) {
         setTopCoins(result.items as ITrendingCoin[]);
@@ -80,6 +101,38 @@ const DashboardView = () => {
 
   useEffect(() => {
     fetchTopCoins();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchTrendingNews = async () => {
+      setTrendingNewsLoading(true);
+      setTrendingNewsError(null);
+      try {
+        const result = await handleGetRequest({
+          path: "/news?page=1&size=5&pagination=true&category=TRENDING",
+        });
+        const data = result?.data ?? result;
+        const items: TrendingNewsItem[] = data?.items ?? [];
+        if (!cancelled) {
+          setTrendingNews(items);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setTrendingNewsError("Failed to load trending news.");
+          setTrendingNews([]);
+        }
+      } finally {
+        if (!cancelled) setTrendingNewsLoading(false);
+      }
+    };
+
+    fetchTrendingNews();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -130,7 +183,7 @@ const DashboardView = () => {
       {/* ================= TOP COINS (HORIZONTAL SCROLL) ================= */}
       <Box
         sx={{
-          mb: 3,
+          mb: 1,
           width: "100%",
           maxWidth: "100%",
           minWidth: 0,
@@ -155,6 +208,9 @@ const DashboardView = () => {
           },
         }}
       >
+        <Typography fontWeight="bold" variant="h6">
+          Trending Coins
+        </Typography>
         <Stack
           direction="row"
           spacing={2}
@@ -287,17 +343,227 @@ const DashboardView = () => {
             })}
         </Stack>
       </Box>
-      <Stack direction="row" justifyContent="flex-end" sx={{ mb: 3 }}>
-        <Button
-          component={Link}
-          to="/markets"
-          variant="outlined"
-          size="small"
-          sx={{ textTransform: "none" }}
-        >
-          View all
-        </Button>
+      <Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
+        <Link to="/screeners" style={{ textDecoration: "none" }}>
+          <Button
+            variant="outlined"
+            size="small"
+            sx={{ textTransform: "none" }}
+          >
+            View all
+          </Button>
+        </Link>
       </Stack>
+
+      {/* ================= TRENDING NEWS ================= */}
+      <Box sx={{ mb: 4 }}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          flexWrap="wrap"
+          gap={1}
+          mb={2}
+        >
+          <Typography fontWeight="bold" variant="h6">
+            Trending News
+          </Typography>
+          {trendingNewsLoading && <CircularProgress size={24} />}
+        </Stack>
+        <Divider sx={{ mb: 2 }} />
+        {trendingNewsError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {trendingNewsError}
+          </Alert>
+        )}
+        {!trendingNewsLoading &&
+          trendingNews.length === 0 &&
+          !trendingNewsError && (
+            <Typography variant="body2" color="text.secondary">
+              No trending news available.
+            </Typography>
+          )}
+        {!!trendingNews.length && (
+          <Box
+            sx={{
+              width: "100%",
+              maxWidth: "100%",
+              minWidth: 0,
+              overflowX: "auto",
+              overflowY: "hidden",
+              pb: 1,
+              WebkitOverflowScrolling: "touch",
+              "&::-webkit-scrollbar": { height: 8 },
+              "&::-webkit-scrollbar-track": {
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(15,23,42,0.5)"
+                    : "rgba(0,0,0,0.06)",
+                borderRadius: 999,
+              },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(148,163,184,0.5)"
+                    : "rgba(148,163,184,0.7)",
+                borderRadius: 999,
+              },
+            }}
+          >
+            <Stack
+              direction="row"
+              spacing={2}
+              sx={{
+                minWidth: "max-content",
+                width: "max-content",
+              }}
+            >
+              {trendingNews.map((news) => {
+                const sentimentColor = getSentimentColor(
+                  String(news.newsSentiment ?? ""),
+                );
+                return (
+                  <Card
+                    key={news.newsId}
+                    variant="outlined"
+                    sx={{
+                      width: 320,
+                      minWidth: 320,
+                      flexShrink: 0,
+                      borderRadius: 3,
+                      p: 2,
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      borderColor:
+                        theme.palette.mode === "dark"
+                          ? "rgba(148,163,184,0.28)"
+                          : "rgba(15,23,42,0.08)",
+                      backgroundColor:
+                        theme.palette.mode === "dark" ? "#020617" : "#FFFFFF",
+                      "&:hover": {
+                        boxShadow: 3,
+                        borderColor: "primary.light",
+                      },
+                    }}
+                  >
+                    <Stack
+                      direction="row"
+                      alignItems="flex-start"
+                      justifyContent="space-between"
+                      spacing={1}
+                    >
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight={700}
+                        sx={{
+                          lineHeight: 1.3,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {news.newsTitle}
+                      </Typography>
+                      <Stack
+                        direction="column"
+                        spacing={0.5}
+                        alignItems="flex-end"
+                        flexShrink={0}
+                      >
+                        {news.newsSentimentCategory === "TRENDING" && (
+                          <Chip
+                            size="small"
+                            label="TRENDING"
+                            color="warning"
+                            variant="filled"
+                            sx={{
+                              fontWeight: 700,
+                              borderRadius: 999,
+                              px: 0.5,
+                            }}
+                          />
+                        )}
+                        {news.newsSentiment && (
+                          <Chip
+                            size="small"
+                            label={
+                              String(news.newsSentiment)
+                                .charAt(0)
+                                .toUpperCase() +
+                              String(news.newsSentiment).slice(1).toLowerCase()
+                            }
+                            color={sentimentColor}
+                            variant="outlined"
+                          />
+                        )}
+                      </Stack>
+                    </Stack>
+                    {news.neswCoinImpact && (
+                      <Stack
+                        direction="row"
+                        alignItems="center"
+                        spacing={1}
+                        sx={{
+                          mt: 1,
+                          py: 0.5,
+                          px: 1,
+                          borderRadius: 1.5,
+                          bgcolor:
+                            theme.palette.mode === "dark"
+                              ? "rgba(15,23,42,0.9)"
+                              : "rgba(15,23,42,0.03)",
+                        }}
+                      >
+                        <Avatar
+                          src={news.neswCoinImpact.image}
+                          alt={news.neswCoinImpact.name}
+                          sx={{ width: 24, height: 24 }}
+                        />
+                        <Typography variant="body2" fontWeight={600}>
+                          {news.neswCoinImpact.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          (
+                          {String(news.neswCoinImpact.symbol ?? "")
+                            .toUpperCase()
+                            .trim()}
+                          )
+                        </Typography>
+                      </Stack>
+                    )}
+                    {news.newsDescription && (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          mt: 1,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {news.newsDescription}
+                      </Typography>
+                    )}
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ mt: 1.5, marginTop: "auto" }}
+                    >
+                      Published{" "}
+                      {convertTime(news.newsPublishedAt) ||
+                        news.newsPublishedAt}
+                    </Typography>
+                  </Card>
+                );
+              })}
+            </Stack>
+          </Box>
+        )}
+      </Box>
 
       {/* ================= DAILY MARKET SUMMARY (API) ================= */}
       <Grid container spacing={3} mb={3} maxWidth="100%" mx="auto">

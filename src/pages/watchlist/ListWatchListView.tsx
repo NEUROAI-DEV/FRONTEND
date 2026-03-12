@@ -25,8 +25,8 @@ import {
 import Pagination from "@mui/material/Pagination";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import AddIcon from "@mui/icons-material/Add";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { useHttp } from "../../hooks/http";
 import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
@@ -71,7 +71,8 @@ const MODAL_PAGE_SIZE = 10;
 export default function ListWatchListView() {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
-  const { handleGetRequest, handlePostRequest } = useHttp();
+  const { handleGetRequest, handlePostRequest, handleRemoveRequest } =
+    useHttp();
 
   const [items, setItems] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,6 +87,9 @@ export default function ListWatchListView() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [saveLoading, setSaveLoading] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const [removingItem, setRemovingItem] = useState<WatchlistItem | null>(null);
+  const [removeLoading, setRemoveLoading] = useState(false);
 
   const fetchWatchlist = async () => {
     setLoading(true);
@@ -187,6 +191,29 @@ export default function ListWatchListView() {
     } finally {
       setSaveLoading(false);
     }
+  };
+
+  const handleOpenRemoveDialog = (item: WatchlistItem) => {
+    setRemovingItem(item);
+    setRemoveDialogOpen(true);
+  };
+
+  const handleCloseRemoveDialog = () => {
+    if (removeLoading) return;
+    setRemoveDialogOpen(false);
+    setRemovingItem(null);
+  };
+
+  const handleConfirmRemove = async () => {
+    if (!removingItem) return;
+    setRemoveLoading(true);
+    await handleRemoveRequest({
+      path: `/watchlist/${removingItem.id}`,
+    });
+    setRemoveLoading(false);
+    setRemoveDialogOpen(false);
+    setRemovingItem(null);
+    fetchWatchlist();
   };
 
   const borderColor = isDark ? "rgba(148,163,184,0.18)" : "rgba(0,0,0,0.08)";
@@ -305,6 +332,7 @@ export default function ListWatchListView() {
                   <TableCell align="right">Vol (24h)</TableCell>
                   <TableCell align="right">High 24h</TableCell>
                   <TableCell align="right">Low 24h</TableCell>
+                  <TableCell align="right">Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -366,37 +394,44 @@ export default function ListWatchListView() {
                             direction="row"
                             spacing={1.5}
                             alignItems="center"
+                            justifyContent="space-between"
                           >
-                            <Box
-                              component="img"
-                              src={row.image}
-                              alt={row.symbol}
-                              sx={{
-                                width: 28,
-                                height: 28,
-                                borderRadius: "50%",
-                                objectFit: "cover",
-                                border: `1px solid ${borderColor}`,
-                              }}
-                            />
-                            <Stack>
-                              <Typography
-                                fontWeight={700}
-                                sx={{ fontSize: 14, lineHeight: 1.2 }}
-                              >
-                                {row.name}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
+                            <Stack
+                              direction="row"
+                              spacing={1.5}
+                              alignItems="center"
+                            >
+                              <Box
+                                component="img"
+                                src={row.image}
+                                alt={row.symbol}
                                 sx={{
-                                  fontSize: 11,
-                                  letterSpacing: 0.5,
-                                  fontFamily: "monospace",
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: "50%",
+                                  objectFit: "cover",
+                                  border: `1px solid ${borderColor}`,
                                 }}
-                              >
-                                {String(row.symbol).toUpperCase()}
-                              </Typography>
+                              />
+                              <Stack>
+                                <Typography
+                                  fontWeight={700}
+                                  sx={{ fontSize: 14, lineHeight: 1.2 }}
+                                >
+                                  {row.name}
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{
+                                    fontSize: 11,
+                                    letterSpacing: 0.5,
+                                    fontFamily: "monospace",
+                                  }}
+                                >
+                                  {String(row.symbol).toUpperCase()}
+                                </Typography>
+                              </Stack>
                             </Stack>
                           </Stack>
                         </TableCell>
@@ -450,6 +485,17 @@ export default function ListWatchListView() {
                           <Typography variant="body2" color="text.secondary">
                             {formatUSD(row.low_24h)}
                           </Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Tooltip title="Remove from watch list">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleOpenRemoveDialog(row)}
+                            >
+                              <DeleteOutlineIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
                         </TableCell>
                       </TableRow>
                     );
@@ -713,6 +759,66 @@ export default function ListWatchListView() {
             sx={{ textTransform: "none", fontWeight: 700 }}
           >
             {saveLoading ? "Menyimpan..." : "Save"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={removeDialogOpen}
+        onClose={handleCloseRemoveDialog}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{
+            fontWeight: 800,
+            borderBottom: `1px solid ${borderColor}`,
+            pb: 1.5,
+          }}
+        >
+          Hapus dari Watch List?
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            Apakah Anda yakin ingin menghapus{" "}
+            <Typography component="span" fontWeight={700}>
+              {removingItem?.name}
+            </Typography>{" "}
+            (
+            {String(removingItem?.symbol ?? "")
+              .toUpperCase()
+              .trim()}{" "}
+            ) dari watch list Anda?
+          </Typography>
+        </DialogContent>
+        <DialogActions
+          sx={{
+            px: 2,
+            py: 2,
+            borderTop: `1px solid ${borderColor}`,
+            gap: 1,
+          }}
+        >
+          <Button
+            variant="outlined"
+            onClick={handleCloseRemoveDialog}
+            disabled={removeLoading}
+          >
+            Batal
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleConfirmRemove}
+            disabled={removeLoading}
+            startIcon={
+              removeLoading ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : null
+            }
+            sx={{ textTransform: "none", fontWeight: 700 }}
+          >
+            {removeLoading ? "Menghapus..." : "Hapus"}
           </Button>
         </DialogActions>
       </Dialog>

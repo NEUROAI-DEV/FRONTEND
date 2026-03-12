@@ -15,6 +15,16 @@ import { useHttp } from "../../hooks/http";
 import { useEffect, useState } from "react";
 import { IUser } from "../../interfaces/User";
 
+interface ISubscription {
+  subscriptionStatus: string;
+  subscriptionStartDate: string;
+  subscriptionEndDate: string | null;
+}
+
+type MyProfileWithSubscription = IUser & {
+  subscription?: ISubscription;
+};
+
 /* ============================================================
    COMPONENT
 ============================================================ */
@@ -23,7 +33,7 @@ const ProfileView = () => {
 
   const { handleGetRequest } = useHttp();
 
-  const [myProfile, setMyProfile] = useState<IUser>();
+  const [myProfile, setMyProfile] = useState<MyProfileWithSubscription>();
 
   const handleGetMyProfile = async () => {
     const result = await handleGetRequest({
@@ -31,9 +41,9 @@ const ProfileView = () => {
     });
 
     if (result) {
-      setMyProfile(result);
+      const data = result?.data ?? result;
+      setMyProfile(data as MyProfileWithSubscription);
     }
-    console.log(result);
   };
 
   useEffect(() => {
@@ -131,8 +141,8 @@ const ProfileView = () => {
 
           <Grid item xs={12} md={6}>
             <InfoItem
-              label="Last Login"
-              value={convertTime(myProfile?.userEmail ?? "_")}
+              label="Last Update"
+              value={convertTime(myProfile?.updatedAt + "") ?? "_"}
             />
           </Grid>
 
@@ -140,6 +150,62 @@ const ProfileView = () => {
             <InfoItem
               label="Account Created"
               value={convertTime(myProfile?.createdAt + "") ?? "_"}
+            />
+          </Grid>
+        </Grid>
+      </Card>
+
+      {/* ================= SUBSCRIPTION INFO ================= */}
+      <Card
+        sx={{
+          mt: 4,
+          p: 4,
+          borderRadius: 4,
+          borderColor: "divider",
+          background:
+            theme.palette.mode === "dark"
+              ? "rgba(255,255,255,0.03)"
+              : "#FFFFFF",
+        }}
+      >
+        <Typography variant="h6" fontWeight={700} mb={3}>
+          Subscription
+        </Typography>
+
+        <Divider sx={{ mb: 3 }} />
+
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={4}>
+            <InfoItem
+              label="Status"
+              value={myProfile?.subscription?.subscriptionStatus ?? "-"}
+              highlight
+            />
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <InfoItem
+              label="Start Date"
+              value={
+                myProfile?.subscription?.subscriptionStartDate
+                  ? (convertTime(
+                      myProfile.subscription.subscriptionStartDate + "",
+                    ) ?? "-")
+                  : "-"
+              }
+            />
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <InfoItem
+              label="End Date"
+              value={
+                myProfile?.subscription?.subscriptionEndDate
+                  ? (convertTime(
+                      myProfile.subscription.subscriptionEndDate + "",
+                    ) ?? "-")
+                  : "-"
+              }
             />
           </Grid>
         </Grid>
