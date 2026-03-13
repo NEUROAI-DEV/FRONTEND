@@ -9,11 +9,17 @@ import {
   Stack,
   Typography,
   Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
 } from "@mui/material";
 import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
 import { useHttp } from "../../hooks/http";
 import { formatUSD } from "../../utilities/convertNumberToCurrency";
+import { useNavigate } from "react-router-dom";
 
 interface ISubscriptionPlan {
   subscriptionPlanId: number;
@@ -27,11 +33,17 @@ interface ISubscriptionPlan {
 }
 
 export default function ListSubscriptionPlanView() {
-  const { handleGetRequest } = useHttp();
+  const { handleGetRequest, handlePostRequest } = useHttp();
+  const navigate = useNavigate();
 
   const [plans, setPlans] = useState<ISubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<ISubscriptionPlan | null>(
+    null,
+  );
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -54,6 +66,43 @@ export default function ListSubscriptionPlanView() {
 
     fetchPlans();
   }, []);
+
+  const handleSelectPlan = (plan: ISubscriptionPlan) => {
+    if (plan.subscriptionPlanCategory === "FREE") {
+      navigate("/subscription-detail");
+      return;
+    }
+    setSelectedPlan(plan);
+    setConfirmOpen(true);
+  };
+
+  const handleCloseConfirm = () => {
+    if (confirmLoading) return;
+    setConfirmOpen(false);
+    setSelectedPlan(null);
+  };
+
+  const handleConfirmCreate = async () => {
+    if (!selectedPlan) return;
+    setConfirmLoading(true);
+    try {
+      await handlePostRequest({
+        path: "/transactions",
+        body: {
+          transactionSubscriptionPlanId: selectedPlan.subscriptionPlanId,
+          transactionProvider: "BANK Transfer",
+          transactionExternalId: "",
+        },
+      });
+      navigate("/subscription-detail");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setConfirmLoading(false);
+      setConfirmOpen(false);
+      setSelectedPlan(null);
+    }
+  };
 
   return (
     <Box sx={{ pb: 2, width: "100%", minWidth: 0 }}>
@@ -111,6 +160,7 @@ export default function ListSubscriptionPlanView() {
                     borderColor: "divider",
                     display: "flex",
                     flexDirection: "column",
+                    cursor: "pointer",
                     transition:
                       "transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease",
                     "&:hover": {
@@ -119,6 +169,7 @@ export default function ListSubscriptionPlanView() {
                       borderColor: "primary.main",
                     },
                   }}
+                  onClick={() => handleSelectPlan(plan)}
                 >
                   <CardContent sx={{ p: 3, flexGrow: 1 }}>
                     <Stack
@@ -213,6 +264,40 @@ export default function ListSubscriptionPlanView() {
           )}
         </Grid>
       )}
+
+      <Dialog
+        open={confirmOpen}
+        onClose={handleCloseConfirm}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Konfirmasi Langganan</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            Anda akan membuat transaksi untuk paket{" "}
+            <Typography component="span" fontWeight={700}>
+              {selectedPlan?.subscriptionPlanName}
+            </Typography>
+            . Lanjutkan ke halaman detail pembayaran?
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={handleCloseConfirm}
+            disabled={confirmLoading}
+          >
+            Batal
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleConfirmCreate}
+            disabled={confirmLoading}
+          >
+            {confirmLoading ? "Memproses..." : "Ya, Lanjutkan"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

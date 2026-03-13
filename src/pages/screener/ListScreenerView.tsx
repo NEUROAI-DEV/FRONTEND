@@ -260,8 +260,8 @@ export default function ListScreenerView() {
     if (tab === "market") fetchMarketsTab();
   }, [tab, marketsPage]);
 
-  // Auto-refresh data every 30 seconds for realtime updates
-  const REFRESH_INTERVAL_MS = 10 * 1000;
+  // Auto-refresh data every 5 seconds for realtime updates
+  const REFRESH_INTERVAL_MS = 5 * 1000;
   useEffect(() => {
     if (subscriptionRequired) return;
     const interval = setInterval(() => {

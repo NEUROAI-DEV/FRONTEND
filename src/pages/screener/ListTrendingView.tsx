@@ -134,9 +134,15 @@ export default function ListTrendingView() {
     }
   };
 
+  const REFRESH_INTERVAL_MS = 5 * 1000;
+
   useEffect(() => {
-    fetchTrending();
-  }, [page, size]);
+    if (subscriptionRequired) return;
+    const interval = setInterval(() => {
+      fetchTrending();
+    }, REFRESH_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [subscriptionRequired]);
 
   const borderColor = isDark ? "rgba(148,163,184,0.18)" : "rgba(0,0,0,0.08)";
 

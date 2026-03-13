@@ -27,6 +27,7 @@ import ListWatchListView from "../pages/watchlist/ListWatchListView";
 import ListLivePredictView from "../pages/livePredict/ListLivePredictView";
 import ListSmartMoneyView from "../pages/smartMoney/ListSmartMoneyView";
 import ListSubscriptionPlanView from "../pages/subscription/ListSubscriptionPlanView";
+import DetailSubscriptionView from "../pages/subscription/DetailSubscriptionView";
 
 function RequireAuth({ children }: { children: JSX.Element }) {
   const { getToken } = useToken();
@@ -79,7 +80,11 @@ function RequireActiveSubscription({ children }: { children: JSX.Element }) {
 
   if (!isAllowed) {
     return (
-      <Navigate to="/subscription-plans" replace state={{ from: location.pathname }} />
+      <Navigate
+        to="/subscription-plans"
+        replace
+        state={{ from: location.pathname }}
+      />
     );
   }
 
@@ -157,6 +162,10 @@ export default function AppRouters() {
     {
       path: "/subscription-plans",
       element: <ListSubscriptionPlanView />,
+    },
+    {
+      path: "/subscription-detail",
+      element: <DetailSubscriptionView />,
     },
     {
       path: "/my-profile",
