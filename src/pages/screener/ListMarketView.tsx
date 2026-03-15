@@ -29,47 +29,33 @@ import { IconMenus } from "../../components/icon";
 import { formatUSD } from "../../utilities/convertNumberToCurrency";
 
 /* ============================================================
-   API: GET /screeners?category=trending&page=1&size=10&vs_currency=usd&order=market_cap_desc
-   Response: { data: { items: [{ item: { name, symbol, market_cap_rank, thumb, data: { price, price_change_percentage_24h: { usd }, market_cap, total_volume } } }], totalItems, currentPage, totalPages } }
+   API: GET /screeners?category=markets&page=1&size=10&vs_currency=usd&order=market_cap_desc
+   Response: { data: { items: [{ id, symbol, name, image, current_price, market_cap, market_cap_rank, total_volume, high_24h, low_24h, price_change_percentage_24h }], totalItems, currentPage, totalPages } }
 ============================================================ */
-interface TrendingRawItem {
-  item: {
-    id: string;
-    name: string;
-    symbol: string;
-    market_cap_rank: number;
-    thumb: string;
-    data?: {
-      price: number;
-      price_change_percentage_24h?: { usd?: number };
-      market_cap?: string;
-      total_volume?: string;
-    };
-  };
-}
-
-interface TrendingRow {
+interface MarketItem {
   id: string;
-  name: string;
   symbol: string;
-  marketCapRank: number;
-  thumb: string;
-  price: number;
-  priceChange24hUsd: number;
-  marketCap: string;
-  totalVolume: string;
+  name: string;
+  image: string;
+  current_price: number;
+  market_cap: number;
+  market_cap_rank: number;
+  total_volume: number;
+  high_24h: number;
+  low_24h: number;
+  price_change_percentage_24h: number | null;
 }
 
 const SUBSCRIPTION_REQUIRED_MESSAGE =
   "Fitur ini memerlukan langganan aktif. Aktifkan free trial atau langganan bulanan terlebih dahulu.";
 
-export default function ListTrendingView() {
+export default function ListMarketView() {
   const theme = useTheme();
   const navigate = useNavigate();
   const isDark = theme.palette.mode === "dark";
   const { handleGetRequest } = useHttp();
 
-  const [items, setItems] = useState<TrendingRow[]>([]);
+  const [items, setItems] = useState<MarketItem[]>([]);
   const [page, setPage] = useState(1);
   const [size] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
@@ -78,33 +64,16 @@ export default function ListTrendingView() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [subscriptionRequired, setSubscriptionRequired] = useState(false);
 
-  const mapTrendingRow = (raw: TrendingRawItem): TrendingRow => {
-    const it = raw.item;
-    const d = it.data;
-    const change24h = d?.price_change_percentage_24h?.usd ?? 0;
-    return {
-      id: it.id,
-      name: it.name ?? "",
-      symbol: it.symbol ?? "",
-      marketCapRank: it.market_cap_rank ?? 0,
-      thumb: it.thumb ?? "",
-      price: typeof d?.price === "number" ? d.price : 0,
-      priceChange24hUsd: typeof change24h === "number" ? change24h : 0,
-      marketCap: d?.market_cap ?? "—",
-      totalVolume: d?.total_volume ?? "—",
-    };
-  };
-
-  const fetchTrending = async () => {
+  const fetchMarkets = async () => {
     setLoading(true);
     setErrorMessage(null);
     setSubscriptionRequired(false);
     try {
-      const path = `/screeners?category=trending&page=${page}&size=${size}&vs_currency=usd&order=market_cap_desc`;
+      const path = `/screeners?category=markets&page=${page}&size=${size}&vs_currency=usd&order=market_cap_desc`;
       const result = await handleGetRequest({ path });
 
       if (result?.items && Array.isArray(result.items)) {
-        setItems((result.items as TrendingRawItem[]).map(mapTrendingRow));
+        setItems(result.items as MarketItem[]);
         setTotalItems(result.totalItems ?? result.items.length);
         setTotalPages(
           Math.max(
@@ -124,7 +93,7 @@ export default function ListTrendingView() {
         setSubscriptionRequired(true);
         setErrorMessage(e?.message || SUBSCRIPTION_REQUIRED_MESSAGE);
       } else {
-        setErrorMessage(e?.message || "Gagal memuat data trending.");
+        setErrorMessage(e?.message || "Gagal memuat data market.");
       }
       setItems([]);
       setTotalItems(0);
@@ -134,15 +103,9 @@ export default function ListTrendingView() {
     }
   };
 
-  const REFRESH_INTERVAL_MS = 5 * 1000;
-
   useEffect(() => {
-    if (subscriptionRequired) return;
-    const interval = setInterval(() => {
-      fetchTrending();
-    }, REFRESH_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [subscriptionRequired]);
+    fetchMarkets();
+  }, [page, size]);
 
   const borderColor = isDark ? "rgba(148,163,184,0.18)" : "rgba(0,0,0,0.08)";
 
@@ -157,8 +120,8 @@ export default function ListTrendingView() {
               icon: <IconMenus.screener fontSize="small" />,
             },
             {
-              label: "Trending",
-              link: "/screeners/trending",
+              label: "Market",
+              link: "/screeners/market",
               icon: undefined,
             },
           ]}
@@ -177,7 +140,7 @@ export default function ListTrendingView() {
               {errorMessage || SUBSCRIPTION_REQUIRED_MESSAGE}
             </Alert>
             <Typography variant="body2" color="text.secondary">
-              Untuk mengakses fitur Trending, aktifkan free trial 30 hari atau
+              Untuk mengakses fitur Market, aktifkan free trial 30 hari atau
               langganan bulanan di halaman Langganan.
             </Typography>
             <Stack direction="row" spacing={1} flexWrap="wrap">
@@ -210,8 +173,8 @@ export default function ListTrendingView() {
             icon: <IconMenus.screener fontSize="small" />,
           },
           {
-            label: "Trending",
-            link: "/screeners/trending",
+            label: "Market",
+            link: "/screeners/market",
             icon: undefined,
           },
         ]}
@@ -247,20 +210,20 @@ export default function ListTrendingView() {
                 fontFamily: "inherit",
               }}
             >
-              Trending
+              Market
             </Typography>
             <Typography
               variant="body2"
               color="text.secondary"
               sx={{ mt: 0.25 }}
             >
-              Koin trending berdasarkan market cap
+              Daftar koin berdasarkan market cap
             </Typography>
           </Box>
           <Tooltip title="Refresh">
             <span>
               <IconButton
-                onClick={fetchTrending}
+                onClick={fetchMarkets}
                 disabled={loading}
                 size="small"
                 sx={{
@@ -312,16 +275,18 @@ export default function ListTrendingView() {
                   <TableCell align="center">#</TableCell>
                   <TableCell>Coin</TableCell>
                   <TableCell align="right">Price</TableCell>
-                  <TableCell align="right">24h % (USD)</TableCell>
+                  <TableCell align="right">24h %</TableCell>
                   <TableCell align="right">Market Cap</TableCell>
-                  <TableCell align="right">Total Volume</TableCell>
+                  <TableCell align="right">Vol (24h)</TableCell>
+                  <TableCell align="right">High 24h</TableCell>
+                  <TableCell align="right">Low 24h</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {items.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={8}
                       align="center"
                       sx={{ py: 6, color: "text.secondary", borderColor }}
                     >
@@ -330,7 +295,8 @@ export default function ListTrendingView() {
                   </TableRow>
                 ) : (
                   items.map((row) => {
-                    const isPositive = row.priceChange24hUsd >= 0;
+                    const change24h = row.price_change_percentage_24h ?? 0;
+                    const isPositive = change24h >= 0;
                     const changeColor = isPositive ? "#22c55e" : "#ef4444";
                     return (
                       <TableRow
@@ -351,7 +317,7 @@ export default function ListTrendingView() {
                       >
                         <TableCell align="center" sx={{ fontWeight: 600 }}>
                           <Chip
-                            label={row.marketCapRank}
+                            label={row.market_cap_rank}
                             size="small"
                             sx={{
                               height: 22,
@@ -371,7 +337,7 @@ export default function ListTrendingView() {
                           >
                             <Box
                               component="img"
-                              src={row.thumb}
+                              src={row.image}
                               alt={row.symbol}
                               sx={{
                                 width: 28,
@@ -404,7 +370,7 @@ export default function ListTrendingView() {
                         </TableCell>
                         <TableCell align="right">
                           <Typography fontWeight={600} sx={{ fontSize: 14 }}>
-                            {formatUSD(row.price)}
+                            {formatUSD(row.current_price)}
                           </Typography>
                         </TableCell>
                         <TableCell align="right">
@@ -429,18 +395,28 @@ export default function ListTrendingView() {
                               sx={{ color: changeColor, fontSize: 13 }}
                             >
                               {isPositive ? "+" : ""}
-                              {row.priceChange24hUsd.toFixed(2)}%
+                              {change24h.toFixed(2)}%
                             </Typography>
                           </Stack>
                         </TableCell>
                         <TableCell align="right">
                           <Typography variant="body2" color="text.secondary">
-                            {row.marketCap}
+                            {formatUSD(row.market_cap)}
                           </Typography>
                         </TableCell>
                         <TableCell align="right">
                           <Typography variant="body2" color="text.secondary">
-                            {row.totalVolume}
+                            {formatUSD(row.total_volume)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography variant="body2" color="text.secondary">
+                            {formatUSD(row.high_24h)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography variant="body2" color="text.secondary">
+                            {formatUSD(row.low_24h)}
                           </Typography>
                         </TableCell>
                       </TableRow>
