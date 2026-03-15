@@ -196,7 +196,7 @@ const ProfileView = () => {
             />
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={4} pb={8}>
             <InfoItem
               label="End Date"
               value={

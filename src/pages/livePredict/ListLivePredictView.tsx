@@ -158,7 +158,6 @@ export default function ListLivePredictView() {
   useEffect(() => {
     if (!addOpen) return;
     fetchCoins();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addOpen, coinsPage]);
 
   if (loading && items.length === 0) {
@@ -178,55 +177,99 @@ export default function ListLivePredictView() {
     );
   }
 
-  if (items.length === 0) {
-    return (
-      <Box sx={{ py: 4 }}>
-        <Typography color="text.secondary" textAlign="center">
-          Belum ada data prediksi. Buat prediksi baru untuk melihat hasil di
-          sini.
-        </Typography>
-      </Box>
-    );
-  }
-
   return (
-    <Stack spacing={2} sx={{ width: "100%", maxWidth: "100%" }}>
+    <Stack
+      spacing={2}
+      sx={{ width: "100%", maxWidth: "100%", paddingBottom: 10, px: 2 }}
+    >
       <Stack direction="row" alignItems="center" spacing={1}>
         <TrendingUpIcon color="primary" />
         <Typography variant="h6" fontWeight={800} sx={{ mr: 1 }}>
           Live Predict
         </Typography>
         <Box sx={{ flexGrow: 1 }} />
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={openAddDialog}
-          sx={{ textTransform: "none", fontWeight: 700 }}
-        >
-          Add Coin
-        </Button>
+        {items.length !== 0 && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={openAddDialog}
+            sx={{ textTransform: "none", fontWeight: 700 }}
+          >
+            Add Coin
+          </Button>
+        )}
       </Stack>
 
-      <Box
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 2,
-          width: "100%",
-        }}
-      >
-        {items.map((item) => (
-          <Box
-            key={item.symbol}
-            sx={{
-              width: { xs: "100%", md: "calc(50% - 8px)" },
-              minWidth: 0,
-            }}
+      {items.length === 0 ? (
+        <Card
+          variant="outlined"
+          sx={{
+            p: 4,
+            textAlign: "center",
+            border: `1px dashed ${isDark ? "rgba(148,163,184,0.35)" : "rgba(0,0,0,0.12)"}`,
+            borderRadius: 3,
+          }}
+        >
+          <Stack
+            alignItems="center"
+            spacing={2}
+            sx={{ maxWidth: 420, mx: "auto" }}
           >
-            <SymbolCard item={item} isDark={isDark} />
-          </Box>
-        ))}
-      </Box>
+            <Avatar
+              sx={{
+                width: 72,
+                height: 72,
+                bgcolor: isDark ? "rgba(59,130,246,0.2)" : "primary.light",
+                color: "primary.main",
+              }}
+            >
+              <TrendingUpIcon sx={{ fontSize: 40 }} />
+            </Avatar>
+            <Typography variant="h6" fontWeight={800}>
+              Belum Ada Prediksi
+            </Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ lineHeight: 1.6 }}
+            >
+              Lihat pergerakan harga yang diprediksi untuk coin pilihan Anda.
+              Pilih coin, lalu kami akan menampilkan chart prediksi berdasarkan
+              analisis terkini.
+            </Typography>
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<AddIcon />}
+              onClick={openAddDialog}
+              sx={{ textTransform: "none", fontWeight: 700, px: 3, py: 1.5 }}
+            >
+              Pilih Coin & Buat Prediksi
+            </Button>
+          </Stack>
+        </Card>
+      ) : (
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 2,
+            width: "100%",
+          }}
+        >
+          {items.map((item) => (
+            <Box
+              key={item.symbol}
+              sx={{
+                width: { xs: "100%", md: "calc(50% - 8px)" },
+                minWidth: 0,
+              }}
+            >
+              <SymbolCard item={item} isDark={isDark} />
+            </Box>
+          ))}
+        </Box>
+      )}
 
       <Dialog open={addOpen} onClose={closeAddDialog} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 800, pr: 6 }}>
@@ -290,7 +333,11 @@ export default function ListLivePredictView() {
                           onClick={() => toggleSymbol(c.coinSymbol)}
                         >
                           <ListItemAvatar>
-                            <Avatar src={c.coinImage} alt={c.coinName} />
+                            <Avatar
+                              src={c.coinImage}
+                              alt={c.coinName}
+                              sizes="small"
+                            />
                           </ListItemAvatar>
                           <ListItemText
                             primary={
