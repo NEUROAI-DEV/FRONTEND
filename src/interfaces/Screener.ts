@@ -1,25 +1,32 @@
-export interface IScreenerCreateRequest {
-  screenerId: number;
-  screenerUserId: number;
-  screenerCoinSymbol: string;
-  screenerProfile: "SCALPING" | "SWING" | "INVEST";
+export interface ICoinPriceChangePercentage24h {
+  usd: number;
+  idr: number;
 }
 
-export interface IScreener {
-  id: number;
-  screenerId: number;
+export interface ICoinData {
+  price: number;
+  price_btc: string;
+  price_change_percentage_24h: ICoinPriceChangePercentage24h;
+  market_cap: string;
+  market_cap_btc: string;
+  total_volume: string;
+  total_volume_btc: string;
+  sparkline: string;
+}
 
-  symbol: string;
-  trend: "BULLISH" | "BEARISH" | "SIDEWAYS" | string;
-  profile: "SCALPING" | "INTRADAY" | "SWING" | string;
-
-  entryBuy: string;
-  entrySell: string;
-  stopLoss: string;
-  takeProfit: string;
-
-  confidence: number;
-  reasoning: string;
-
-  createdAt: string;
+export interface ITrendingCoin {
+  item: {
+    id: string;
+    coin_id: number;
+    name: string;
+    symbol: string;
+    market_cap_rank: number;
+    thumb: string;
+    small: string;
+    large: string;
+    slug: string;
+    price_btc: number;
+    score: number;
+    data: ICoinData;
+  };
 }

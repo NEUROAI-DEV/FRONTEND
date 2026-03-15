@@ -1,700 +1,483 @@
-import Box from "@mui/material/Box";
-import {
-  DataGrid,
-  GridActionsCellItem,
-  GridColDef,
-  GridToolbarContainer,
-} from "@mui/x-data-grid";
-import RefreshIcon from "@mui/icons-material/Refresh";
-import SearchIcon from "@mui/icons-material/Search";
-import CloseIcon from "@mui/icons-material/Close";
-import AddIcon from "@mui/icons-material/Add";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useTheme } from "@mui/material/styles";
 import {
   Alert,
+  Box,
   Button,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  FormControl,
-  IconButton,
-  InputAdornment,
-  InputLabel,
-  List,
-  ListItemButton,
-  ListItemText,
-  MenuItem,
+  CircularProgress,
   Paper,
-  Select,
   Stack,
-  TextField,
-  Tooltip,
+  Tab,
+  Tabs,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Typography,
 } from "@mui/material";
-import CircularProgress from "@mui/material/CircularProgress";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import Pagination from "@mui/material/Pagination";
 import { useHttp } from "../../hooks/http";
-import BreadCrumberStyle from "../../components/breadcrumb/Index";
-import { IconMenus } from "../../components/icon";
-import { IScreener } from "../../interfaces/Screener";
-import ModalStyle from "../../components/modal";
-import DeleteIcon from "@mui/icons-material/DeleteOutlined";
-import { GeckoCoinItem } from "../../interfaces/Market";
 import { formatUSD } from "../../utilities/convertNumberToCurrency";
 
 /* ============================================================
-   Data: baseUrl/screeners
-   Response: { data: { items, totalItems, totalPages, currentPage } }
-   API TYPES
+   Trending: GET /screeners?category=trending&...
+   Response: items[] with item: { name, symbol, market_cap_rank, thumb, data: { price, price_change_percentage_24h: { usd }, market_cap, total_volume } }
 ============================================================ */
-interface EntryZone {
-  buy: string;
-  sell: string;
-}
-
-interface Analysis {
-  symbol: string;
-  profile: string;
-  trend: string;
-  confidence: number;
-  entryZone: EntryZone;
-  stopLoss: string;
-  takeProfit: string;
-  reasoning: string;
-}
-
-interface ScreenerItem {
-  screenerId: number;
-  screenerCoinImage: string;
-  screenerUserId: number;
-  screenerCoinSymbol: string;
-  screenerProfile: string;
-  analysis: Analysis;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-interface ScreenerRow {
-  id: number;
-  img: string;
-  screenerId: number;
-  symbol: string;
-  profile: string;
-  trend: string;
-  confidence: number;
-  entryBuy: string;
-  entrySell: string;
-  stopLoss: string;
-  takeProfit: string;
-  reasoning: string;
-  createdAt: string;
-}
-
-/** markets/coins response item */
-interface CoinItem {
-  symbol: string;
-  baseAsset: string;
-}
-
-function NoRowsOverlay({
-  title,
-  subtitle,
-}: {
-  title: string;
-  subtitle?: string;
-}) {
-  return (
-    <Stack
-      alignItems="center"
-      justifyContent="center"
-      sx={{ height: "100%", py: 6, px: 2 }}
-      spacing={0.5}
-    >
-      <Typography fontWeight={700}>{title}</Typography>
-      {subtitle ? (
-        <Typography variant="body2" color="text.secondary" textAlign="center">
-          {subtitle}
-        </Typography>
-      ) : null}
-    </Stack>
-  );
-}
-
-const SCREENER_PROFILES = ["SCALPING", "SWING", "INVEST"] as const;
-
-function ScreenerToolbar({
-  query,
-  onQueryChange,
-  onRefresh,
-  onAddCoin,
-  loading,
-}: {
-  query: string;
-  onQueryChange: (v: string) => void;
-  onRefresh: () => void;
-  onAddCoin: () => void;
-  loading: boolean;
-}) {
-  return (
-    <GridToolbarContainer sx={{ px: 0, py: 0 }}>
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        spacing={1.25}
-        alignItems={{ xs: "stretch", md: "center" }}
-        justifyContent="space-between"
-      >
-        <Stack
-          direction="row"
-          spacing={1}
-          alignItems="center"
-          flexWrap="wrap"
-          py={2}
-        >
-          <TextField
-            value={query}
-            onChange={(e) => onQueryChange(e.target.value)}
-            size="small"
-            placeholder="Search symbol (e.g. ETHUSDT)"
-            sx={{ maxWidth: 420 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-              endAdornment: query ? (
-                <InputAdornment position="end">
-                  <Tooltip title="Clear">
-                    <IconButton
-                      size="small"
-                      onClick={() => onQueryChange("")}
-                      edge="end"
-                    >
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </InputAdornment>
-              ) : undefined,
-            }}
-          />
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={onAddCoin}
-            sx={{ whiteSpace: "nowrap" }}
-          >
-            Add Coin
-          </Button>
-        </Stack>
-        <Tooltip title="Refresh">
-          <span>
-            <IconButton
-              onClick={onRefresh}
-              disabled={loading}
-              sx={{ border: 1, borderColor: "divider", borderRadius: 1 }}
-            >
-              <RefreshIcon fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
-      </Stack>
-    </GridToolbarContainer>
-  );
-}
-
-function mapItemToRow(item: ScreenerItem): ScreenerRow {
-  const a = item.analysis || ({} as Analysis);
-  const ez = a.entryZone || { buy: "-", sell: "-" };
-  return {
-    id: item.screenerId,
-    img: item.screenerCoinImage ?? "",
-    screenerId: item.screenerId,
-    symbol: item.screenerCoinSymbol || a.symbol || "-",
-    profile: item.screenerProfile || a.profile || "-",
-    trend: a.trend || "-",
-    confidence: typeof a.confidence === "number" ? a.confidence : 0,
-    entryBuy: ez.buy ?? "-",
-    entrySell: ez.sell ?? "-",
-    stopLoss: a.stopLoss ?? "-",
-    takeProfit: a.takeProfit ?? "-",
-    reasoning: a.reasoning ?? "",
-    createdAt: item.createdAt ?? "-",
+interface TrendingRawItem {
+  item: {
+    id: string;
+    name: string;
+    symbol: string;
+    market_cap_rank: number;
+    thumb: string;
+    data?: {
+      price: number;
+      price_change_percentage_24h?: { usd?: number };
+      market_cap?: string;
+      total_volume?: string;
+    };
   };
 }
+
+interface TrendingRow {
+  id: string;
+  name: string;
+  symbol: string;
+  marketCapRank: number;
+  thumb: string;
+  price: number;
+  priceChange24hUsd: number;
+  marketCap: string;
+  totalVolume: string;
+}
+
+/* ============================================================
+   Gainers/Losers: GET /screeners?category=gainer|loser&...
+   Response: items[] flat { id, symbol, name, image, current_price, market_cap_rank, total_volume, high_24h, low_24h, price_change_percentage_24h }
+============================================================ */
+interface MarketTrendItem {
+  id: string;
+  symbol: string;
+  name: string;
+  image: string;
+  current_price: number;
+  market_cap: number;
+  market_cap_rank: number;
+  total_volume: number;
+  high_24h: number;
+  low_24h: number;
+  price_change_percentage_24h: number | null;
+}
+
+const SUBSCRIPTION_REQUIRED_MESSAGE =
+  "Fitur ini memerlukan langganan aktif. Aktifkan free trial atau langganan bulanan terlebih dahulu.";
+
+type TabValue = "trending" | "gainers" | "losers" | "market";
+
+const SIZE = 10;
 
 export default function ListScreenerView() {
-  const {
-    handleGetTableDataRequest,
-    handleGetRequest,
-    handlePostRequest,
-    handleRemoveRequest,
-  } = useHttp();
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<ScreenerRow[]>([]);
-  const [rowCount, setRowCount] = useState(0);
-  const [query, setQuery] = useState("");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [paginationModel, setPaginationModel] = useState({
-    page: 0,
-    pageSize: 10,
-  });
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const theme = useTheme();
+  const navigate = useNavigate();
+  const isDark = theme.palette.mode === "dark";
+  const { handleGetRequest } = useHttp();
 
-  const [openAddModal, setOpenAddModal] = useState(false);
-  const [coinSearch, setCoinSearch] = useState("");
-  const [coinPage, setCoinPage] = useState(1);
-  const [coins, setCoins] = useState<GeckoCoinItem[]>([]);
+  const [tab, setTab] = useState<TabValue>("trending");
+  const [subscriptionRequired, setSubscriptionRequired] = useState(false);
 
-  const [coinsTotalPages, setCoinsTotalPages] = useState(1);
-  const [loadingCoins, setLoadingCoins] = useState(false);
-  const [selectedCoin, setSelectedCoin] = useState<GeckoCoinItem | null>(null);
-  const [selectedProfile, setSelectedProfile] =
-    useState<(typeof SCREENER_PROFILES)[number]>("SCALPING");
-  const [saving, setSaving] = useState(false);
-  const [debouncedCoinSearch, setDebouncedCoinSearch] = useState("");
+  // Trending state
+  const [trendingItems, setTrendingItems] = useState<TrendingRow[]>([]);
+  const [trendingPage, setTrendingPage] = useState(1);
+  const [trendingTotalItems, setTrendingTotalItems] = useState(0);
+  const [trendingTotalPages, setTrendingTotalPages] = useState(1);
+  const [loadingTrending, setLoadingTrending] = useState(false);
+  const [errorTrending, setErrorTrending] = useState<string | null>(null);
 
-  const [modalDeleteData, setModalDeleteData] = useState<IScreener>();
-  const [openModalDelete, setOpenModalDelete] = useState<boolean>(false);
+  // Gainers/Losers state (shared for both tabs)
+  const [marketItems, setMarketItems] = useState<MarketTrendItem[]>([]);
+  const [marketPage, setMarketPage] = useState(1);
+  const [marketTotalItems, setMarketTotalItems] = useState(0);
+  const [marketTotalPages, setMarketTotalPages] = useState(1);
+  const [loadingMarket, setLoadingMarket] = useState(false);
+  const [errorMarket, setErrorMarket] = useState<string | null>(null);
 
-  const handleDeleteListItem = async (itemId: string) => {
-    await handleRemoveRequest({
-      path: `/screeners/${itemId}`,
-    });
-    fetchScreeners();
+  // Market tab state (category=markets)
+  const [marketsItems, setMarketsItems] = useState<MarketTrendItem[]>([]);
+  const [marketsPage, setMarketsPage] = useState(1);
+  const [marketsTotalItems, setMarketsTotalItems] = useState(0);
+  const [marketsTotalPages, setMarketsTotalPages] = useState(1);
+  const [loadingMarkets, setLoadingMarkets] = useState(false);
+  const [errorMarkets, setErrorMarkets] = useState<string | null>(null);
+
+  const borderColor = isDark ? "rgba(148,163,184,0.18)" : "rgba(0,0,0,0.08)";
+
+  const mapTrendingRow = (raw: TrendingRawItem): TrendingRow => {
+    const it = raw.item;
+    const d = it.data;
+    const change24h = d?.price_change_percentage_24h?.usd ?? 0;
+    return {
+      id: it.id,
+      name: it.name ?? "",
+      symbol: it.symbol ?? "",
+      marketCapRank: it.market_cap_rank ?? 0,
+      thumb: it.thumb ?? "",
+      price: typeof d?.price === "number" ? d.price : 0,
+      priceChange24hUsd: typeof change24h === "number" ? change24h : 0,
+      marketCap: d?.market_cap ?? "—",
+      totalVolume: d?.total_volume ?? "—",
+    };
   };
 
-  const handleOpenModalDelete = (data: IScreener) => {
-    setModalDeleteData(data);
-    setOpenModalDelete(!openModalDelete);
-  };
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedQuery(query.trim()), 400);
-    return () => clearTimeout(t);
-  }, [query]);
-
-  useEffect(() => {
-    setPaginationModel((prev) => ({ ...prev, page: 0 }));
-  }, [debouncedQuery]);
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedCoinSearch(coinSearch.trim()), 400);
-    return () => clearTimeout(t);
-  }, [coinSearch]);
-
-  const fetchCoins = async () => {
-    setLoadingCoins(true);
+  const fetchTrending = async () => {
+    setErrorTrending(null);
+    setSubscriptionRequired(false);
     try {
-      const path = `/markets/coins/gecko?vs_currency=usd&order=market_cap_desc&search=${encodeURIComponent(debouncedCoinSearch)}&page=${coinPage}&per_page=20`;
+      const path = `/screeners?category=trending&page=${trendingPage}&size=${SIZE}&vs_currency=usd&order=market_cap_desc`;
       const result = await handleGetRequest({ path });
-      if (result?.items) {
-        setCoins(result.items as GeckoCoinItem[]);
-        setCoinsTotalPages(result.totalPages ?? 1);
+      if (result?.items && Array.isArray(result.items)) {
+        setTrendingItems(
+          (result.items as TrendingRawItem[]).map(mapTrendingRow),
+        );
+        setTrendingTotalItems(result.totalItems ?? result.items.length);
+        setTrendingTotalPages(
+          Math.max(
+            1,
+            result.totalPages ??
+              Math.ceil((result.totalItems ?? result.items.length) / SIZE),
+          ),
+        );
       } else {
-        setCoins([]);
-        setCoinsTotalPages(1);
+        setTrendingItems([]);
+        setTrendingTotalItems(0);
+        setTrendingTotalPages(1);
       }
-    } catch {
-      setCoins([]);
-      setCoinsTotalPages(1);
-    } finally {
-      setLoadingCoins(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!openAddModal) return;
-    fetchCoins();
-  }, [openAddModal, debouncedCoinSearch, coinPage]);
-
-  const handleOpenAddModal = () => {
-    setOpenAddModal(true);
-    setCoinSearch("");
-    setCoinPage(1);
-    setSelectedCoin(null);
-    setSelectedProfile("SCALPING");
-    setDebouncedCoinSearch("");
-  };
-
-  const handleCloseAddModal = () => {
-    setOpenAddModal(false);
-    setSelectedCoin(null);
-  };
-
-  const handleSaveAddCoin = async () => {
-    if (!selectedCoin || saving) return;
-    setSaving(true);
-    try {
-      await handlePostRequest({
-        path: "/screeners",
-        body: {
-          screenerCoinSymbol: selectedCoin.symbol,
-          screenerProfile: selectedProfile,
-          screenerCoinImage: selectedCoin.image ?? "",
-        },
-      });
-      handleCloseAddModal();
-      fetchScreeners();
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const fetchScreeners = async () => {
-    try {
-      setLoading(true);
-      setErrorMessage(null);
-      const result = await handleGetTableDataRequest({
-        path: "/screeners",
-        page: paginationModel.page + 1,
-        size: paginationModel.pageSize,
-        filter: debouncedQuery ? { search: debouncedQuery } : undefined,
-      });
-
-      console.log(result);
-
-      if (result?.items) {
-        const rows = (result.items as ScreenerItem[]).map(mapItemToRow);
-        setData(rows);
-        setRowCount(result.totalItems ?? rows.length);
-        setLastUpdated(new Date());
+    } catch (err: unknown) {
+      const e = err as Error & { status?: number };
+      if (e?.status === 403) {
+        setSubscriptionRequired(true);
+        setErrorTrending(e?.message || SUBSCRIPTION_REQUIRED_MESSAGE);
+      } else {
+        setErrorTrending(e?.message || "Gagal memuat data trending.");
       }
-    } catch (error) {
-      console.error(error);
-      setErrorMessage("Failed to load screeners. Please try again.");
+      setTrendingItems([]);
+      setTrendingTotalItems(0);
+      setTrendingTotalPages(1);
     } finally {
-      setLoading(false);
+      setLoadingTrending(false);
     }
   };
 
-  useEffect(() => {
-    fetchScreeners();
-  }, [paginationModel.page, paginationModel.pageSize, debouncedQuery]);
-
-  const filteredData = data;
-
-  const columns: GridColDef<ScreenerRow>[] = [
-    {
-      field: "symbol",
-      headerName: "Symbol",
-      flex: 1,
-      minWidth: 120,
-      renderCell: (params) => {
-        return (
-          <Stack direction="row" spacing={0.5} alignItems="center">
-            <Box
-              component="img"
-              src={params.row.img ?? ""}
-              alt={String(params.value ?? "").toUpperCase()}
-              sx={{ width: 24, height: 24, borderRadius: "50%" }}
-            />
-            <Typography fontWeight={700} sx={{ letterSpacing: 0.3 }}>
-              {String(params.value ?? "").toUpperCase()}{" "}
-            </Typography>
-          </Stack>
+  const fetchMarketTrend = async (category: "gainers" | "losers") => {
+    setErrorMarket(null);
+    setSubscriptionRequired(false);
+    try {
+      const path = `/screeners?category=${category}&page=${marketPage}&size=${SIZE}&vs_currency=usd&order=market_cap_desc`;
+      const result = await handleGetRequest({ path });
+      if (result?.items && Array.isArray(result.items)) {
+        setMarketItems(result.items as MarketTrendItem[]);
+        setMarketTotalItems(result.totalItems ?? result.items.length);
+        setMarketTotalPages(
+          Math.max(
+            1,
+            result.totalPages ??
+              Math.ceil((result.totalItems ?? result.items.length) / SIZE),
+          ),
         );
-      },
-    },
-    {
-      field: "profile",
-      headerName: "Profile",
-      flex: 0.8,
-      minWidth: 100,
-      renderCell: (params) => (
-        <Chip
-          label={String(params.value ?? "-")}
-          size="small"
+      } else {
+        setMarketItems([]);
+        setMarketTotalItems(0);
+        setMarketTotalPages(1);
+      }
+    } catch (err: unknown) {
+      const e = err as Error & { status?: number };
+      if (e?.status === 403) {
+        setSubscriptionRequired(true);
+        setErrorMarket(e?.message || SUBSCRIPTION_REQUIRED_MESSAGE);
+      } else {
+        setErrorMarket(e?.message || "Gagal memuat data.");
+      }
+      setMarketItems([]);
+      setMarketTotalItems(0);
+      setMarketTotalPages(1);
+    } finally {
+      setLoadingMarket(false);
+    }
+  };
+
+  useEffect(() => {
+    if (tab === "trending") fetchTrending();
+  }, [tab, trendingPage]);
+
+  const fetchMarketsTab = async () => {
+    setErrorMarkets(null);
+    setSubscriptionRequired(false);
+    try {
+      const path = `/screeners?category=markets&page=${marketsPage}&size=${SIZE}&vs_currency=usd&order=market_cap_desc`;
+      const result = await handleGetRequest({ path });
+      if (result?.items && Array.isArray(result.items)) {
+        setMarketsItems(result.items as MarketTrendItem[]);
+        setMarketsTotalItems(result.totalItems ?? result.items.length);
+        setMarketsTotalPages(
+          Math.max(
+            1,
+            result.totalPages ??
+              Math.ceil((result.totalItems ?? result.items.length) / SIZE),
+          ),
+        );
+      } else {
+        setMarketsItems([]);
+        setMarketsTotalItems(0);
+        setMarketsTotalPages(1);
+      }
+    } catch (err: unknown) {
+      const e = err as Error & { status?: number };
+      if (e?.status === 403) {
+        setSubscriptionRequired(true);
+        setErrorMarkets(e?.message || SUBSCRIPTION_REQUIRED_MESSAGE);
+      } else {
+        setErrorMarkets(e?.message || "Gagal memuat data market.");
+      }
+      setMarketsItems([]);
+      setMarketsTotalItems(0);
+      setMarketsTotalPages(1);
+    } finally {
+      setLoadingMarkets(false);
+    }
+  };
+
+  useEffect(() => {
+    if (tab === "gainers") fetchMarketTrend("gainers");
+    if (tab === "losers") fetchMarketTrend("losers");
+  }, [tab, marketPage]);
+
+  useEffect(() => {
+    if (tab === "market") fetchMarketsTab();
+  }, [tab, marketsPage]);
+
+  // Auto-refresh data every 5 seconds for realtime updates
+  const REFRESH_INTERVAL_MS = 5 * 1000;
+  useEffect(() => {
+    if (subscriptionRequired) return;
+    const interval = setInterval(() => {
+      if (tab === "trending") fetchTrending();
+      else if (tab === "gainers") fetchMarketTrend("gainers");
+      else if (tab === "losers") fetchMarketTrend("losers");
+      else if (tab === "market") fetchMarketsTab();
+    }, REFRESH_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [tab, subscriptionRequired, trendingPage, marketPage, marketsPage]);
+
+  const handleTabChange = (_: React.SyntheticEvent, newTab: TabValue) => {
+    setTab(newTab);
+    if (newTab === "trending") setTrendingPage(1);
+    else if (newTab === "market") setMarketsPage(1);
+    else setMarketPage(1);
+  };
+
+  const loading =
+    tab === "trending"
+      ? loadingTrending
+      : tab === "market"
+        ? loadingMarkets
+        : loadingMarket;
+  const errorMessage =
+    tab === "trending"
+      ? errorTrending
+      : tab === "market"
+        ? errorMarkets
+        : errorMarket;
+  const setErrorMessage =
+    tab === "trending"
+      ? setErrorTrending
+      : tab === "market"
+        ? setErrorMarkets
+        : setErrorMarket;
+
+  if (subscriptionRequired) {
+    return (
+      <Box sx={{ pb: 2 }}>
+        <Paper
           variant="outlined"
-          color="primary"
-        />
-      ),
-    },
-    {
-      field: "trend",
-      headerName: "Trend",
-      flex: 0.8,
-      minWidth: 100,
-      renderCell: (params) => {
-        const v = String(params.value ?? "").toUpperCase();
-        const isBullish = v === "BULLISH" || v === "BULL";
-        return (
-          <Stack direction="row" spacing={0.5} alignItems="center">
-            {isBullish ? (
-              <TrendingUpIcon fontSize="small" color="success" />
-            ) : (
-              <TrendingDownIcon fontSize="small" color="error" />
-            )}
-            <Typography
-              variant="body2"
-              color={isBullish ? "success.main" : "error.main"}
-              fontWeight={600}
-            >
-              {params.value ?? "-"}
+          sx={{
+            p: 3,
+            borderRadius: 2,
+            border: `1px solid ${borderColor}`,
+            bgcolor: isDark ? "rgba(15,23,42,0.5)" : "background.paper",
+          }}
+        >
+          <Stack spacing={2}>
+            <Alert severity="warning">
+              {errorTrending ||
+                errorMarket ||
+                errorMarkets ||
+                SUBSCRIPTION_REQUIRED_MESSAGE}
+            </Alert>
+            <Typography variant="body2" color="text.secondary">
+              Untuk mengakses fitur Screeners, aktifkan free trial 30 hari atau
+              langganan bulanan di halaman Langganan.
             </Typography>
+            <Stack direction="row" spacing={1} flexWrap="wrap">
+              <Button
+                variant="contained"
+                onClick={() => navigate("/subscription")}
+              >
+                Aktifkan free trial / Langganan
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => navigate("/my-profile")}
+              >
+                Ke Profile
+              </Button>
+            </Stack>
           </Stack>
-        );
-      },
-    },
-    {
-      field: "confidence",
-      headerName: "Confidence",
-      flex: 0.6,
-      minWidth: 100,
-      type: "number",
-      renderCell: (params) => (
-        <Typography variant="body2" fontWeight={600}>
-          {typeof params.value === "number"
-            ? `${(params.value * 100).toFixed(0)}%`
-            : "-"}
-        </Typography>
-      ),
-    },
-    {
-      field: "entryBuy",
-      headerName: "Entry (Buy)",
-      flex: 1,
-      minWidth: 120,
-    },
-    {
-      field: "entrySell",
-      headerName: "Entry (Sell)",
-      flex: 1,
-      minWidth: 120,
-    },
-    {
-      field: "stopLoss",
-      headerName: "Stop Loss",
-      flex: 0.7,
-      minWidth: 90,
-    },
-    {
-      field: "takeProfit",
-      headerName: "Take Profit",
-      flex: 0.7,
-      minWidth: 90,
-    },
-    {
-      field: "reasoning",
-      headerName: "Reasoning",
-      flex: 2,
-      minWidth: 200,
-      renderCell: (params) => {
-        const text = String(params.value ?? "");
-        const truncated =
-          text.length > 80 ? `${text.slice(0, 80)}...` : text || "-";
-        return (
-          <Tooltip title={text || ""} enterDelay={300}>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-              }}
-            >
-              {truncated}
-            </Typography>
-          </Tooltip>
-        );
-      },
-    },
-
-    {
-      field: "actions",
-      type: "actions",
-      renderHeader: () => <strong>{"ACTION"}</strong>,
-      flex: 1,
-      cellClassName: "actions",
-      getActions: ({ row }) => {
-        return [
-          <GridActionsCellItem
-            icon={<DeleteIcon color="error" />}
-            label="Delete"
-            onClick={() => handleOpenModalDelete(row)}
-            color="inherit"
-          />,
-        ];
-      },
-    },
-  ];
+        </Paper>
+      </Box>
+    );
+  }
 
   return (
-    <Box sx={{ pb: 2 }}>
-      <BreadCrumberStyle
-        navigation={[
-          {
-            label: "Screeners",
-            link: "/screeners",
-            icon: <IconMenus.trend fontSize="small" />,
-          },
-        ]}
-      />
+    <Box sx={{ pb: 2, width: "100%", minWidth: 0 }}>
+      <Paper
+        variant="outlined"
+        sx={{
+          borderRadius: 2,
+          border: `1px solid ${borderColor}`,
+          bgcolor: isDark ? "rgba(15,23,42,0.4)" : "background.paper",
+          overflow: "hidden",
+        }}
+      >
+        <Tabs
+          value={tab}
+          onChange={handleTabChange}
+          sx={{
+            px: 2,
+            minHeight: 48,
+            borderBottom: `1px solid ${borderColor}`,
+            "& .MuiTab-root": {
+              textTransform: "none",
+              fontWeight: 600,
+              fontSize: 14,
+            },
+            "& .MuiTabs-indicator": { height: 3, borderRadius: "3px 3px 0 0" },
+          }}
+        >
+          <Tab value="trending" label="Trending" />
+          <Tab
+            value="gainers"
+            label={
+              <Stack direction="row" spacing={1} alignItems="center">
+                <TrendingUpIcon sx={{ fontSize: 18 }} color="success" />
+                <span>Gainers</span>
+              </Stack>
+            }
+          />
+          <Tab
+            value="losers"
+            label={
+              <Stack direction="row" spacing={1} alignItems="center">
+                <TrendingDownIcon sx={{ fontSize: 18 }} color="error" />
+                <span>Losers</span>
+              </Stack>
+            }
+          />
+          <Tab value="market" label="Market" />
+        </Tabs>
 
-      <Paper variant="outlined" sx={{ p: { xs: 1.5, md: 2 } }}>
-        <Stack spacing={1.25} alignItems="flex-start">
-          <Box>
-            <Typography variant="h5" fontWeight={800}>
-              Screeners
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Analysis & entry zones
-              {lastUpdated ? ` • Updated ${lastUpdated.toLocaleString()}` : ""}
-            </Typography>
-          </Box>
-        </Stack>
-
-        {errorMessage ? (
-          <Alert severity="error" sx={{ mt: 2 }}>
+        {errorMessage && (
+          <Alert
+            severity="error"
+            sx={{ mx: 2, mt: 2 }}
+            onClose={() => setErrorMessage(null)}
+          >
             {errorMessage}
           </Alert>
-        ) : null}
+        )}
 
-        <Divider sx={{ my: 2 }} />
-
-        <Box sx={{ width: "100%" }}>
-          <DataGrid
-            rows={filteredData}
-            columns={columns}
-            autoHeight
-            loading={loading}
-            disableRowSelectionOnClick
-            pageSizeOptions={[10, 25, 50]}
-            paginationModel={paginationModel}
-            onPaginationModelChange={setPaginationModel}
-            rowCount={rowCount}
-            paginationMode="server"
-            hideFooterSelectedRowCount
-            slots={{
-              toolbar: ScreenerToolbar,
-              noRowsOverlay: () => (
-                <NoRowsOverlay
-                  title={query ? "No matches" : "No screeners"}
-                  subtitle={
-                    query
-                      ? "Try a different symbol."
-                      : "No screener data available."
-                  }
-                />
-              ),
-            }}
-            slotProps={{
-              toolbar: {
-                query,
-                onQueryChange: setQuery,
-                onRefresh: fetchScreeners,
-                onAddCoin: handleOpenAddModal,
-                loading,
-              },
-            }}
-            sx={{
-              border: 0,
-              "& .MuiDataGrid-columnHeaders": {
-                bgcolor: "background.default",
-                borderRadius: 1,
-              },
-              "& .MuiDataGrid-cell": { py: 1 },
-              "& .MuiDataGrid-row:hover": { bgcolor: "action.hover" },
-              "& .MuiDataGrid-footerContainer": { borderTopColor: "divider" },
-            }}
-          />
-        </Box>
-
-        <Dialog
-          open={openAddModal}
-          onClose={handleCloseAddModal}
-          maxWidth="sm"
-          fullWidth
-          PaperProps={{ sx: { borderRadius: 2 } }}
-        >
-          <DialogTitle>Add Coin to Screener</DialogTitle>
-          <DialogContent>
-            <Stack spacing={2} sx={{ pt: 0.5 }}>
-              <TextField
-                size="small"
-                fullWidth
-                placeholder="Search coin (e.g. BTC)"
-                value={coinSearch}
-                onChange={(e) => {
-                  setCoinSearch(e.target.value);
-                  setCoinPage(1);
-                }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              <FormControl size="small" fullWidth>
-                <InputLabel>Profile</InputLabel>
-                <Select
-                  value={selectedProfile}
-                  label="Profile"
-                  onChange={(e) =>
-                    setSelectedProfile(
-                      e.target.value as (typeof SCREENER_PROFILES)[number],
-                    )
-                  }
-                >
-                  {SCREENER_PROFILES.map((p) => (
-                    <MenuItem key={p} value={p}>
-                      {p}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Box>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                  Select a coin
-                </Typography>
-                {loadingCoins ? (
-                  <Stack
-                    alignItems="center"
-                    justifyContent="center"
-                    sx={{ py: 4 }}
+        {loading ? (
+          <Stack alignItems="center" justifyContent="center" sx={{ py: 8 }}>
+            <CircularProgress size={32} />
+          </Stack>
+        ) : tab === "trending" ? (
+          <>
+            <TableContainer sx={{ overflowX: "auto" }}>
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow
+                    sx={{
+                      "& .MuiTableCell-head": {
+                        fontWeight: 700,
+                        fontSize: 11,
+                        textTransform: "uppercase",
+                        letterSpacing: 0.5,
+                        color: "text.secondary",
+                        borderBottomColor: borderColor,
+                        py: 1.5,
+                        bgcolor: isDark ? "rgba(15,23,42,0.6)" : "action.hover",
+                      },
+                    }}
                   >
-                    <CircularProgress size={28} />
-                  </Stack>
-                ) : coins.length === 0 ? (
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ py: 2 }}
-                  >
-                    No coins found. Try a different search.
-                  </Typography>
-                ) : (
-                  <>
-                    <List
-                      dense
-                      sx={{
-                        maxHeight: 280,
-                        overflow: "auto",
-                        border: 1,
-                        borderColor: "divider",
-                        borderRadius: 1,
-                      }}
-                    >
-                      {coins.map((coin) => {
-                        const change24 =
-                          coin.price_change_percentage_24h ?? 0.0;
-                        const isPositive = change24 >= 0;
-                        return (
-                          <ListItemButton
-                            key={coin.symbol}
-                            selected={selectedCoin?.symbol === coin.symbol}
-                            onClick={() => setSelectedCoin(coin)}
-                          >
+                    <TableCell align="center">#</TableCell>
+                    <TableCell>Coin</TableCell>
+                    <TableCell align="right">Price</TableCell>
+                    <TableCell align="right">24h % (USD)</TableCell>
+                    <TableCell align="right">Market Cap</TableCell>
+                    <TableCell align="right">Total Volume</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {trendingItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={6}
+                        align="center"
+                        sx={{ py: 6, color: "text.secondary", borderColor }}
+                      >
+                        Tidak ada data.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    trendingItems.map((row) => {
+                      const isPositive = row.priceChange24hUsd >= 0;
+                      const changeColor = isPositive ? "#22c55e" : "#ef4444";
+                      return (
+                        <TableRow
+                          key={`${row.id}-${row.symbol}`}
+                          hover
+                          sx={{
+                            "& .MuiTableCell-root": {
+                              borderBottomColor: borderColor,
+                              py: 1.5,
+                              fontVariantNumeric: "tabular-nums",
+                            },
+                            "&:hover": {
+                              bgcolor: isDark
+                                ? "rgba(148,163,184,0.06)"
+                                : "action.hover",
+                            },
+                          }}
+                        >
+                          <TableCell align="center" sx={{ fontWeight: 600 }}>
+                            <Chip
+                              label={row.marketCapRank}
+                              size="small"
+                              sx={{
+                                height: 22,
+                                fontSize: 11,
+                                fontWeight: 700,
+                                bgcolor: isDark
+                                  ? "rgba(148,163,184,0.12)"
+                                  : "action.selected",
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
                             <Stack
                               direction="row"
                               spacing={1.5}
@@ -702,116 +485,520 @@ export default function ListScreenerView() {
                             >
                               <Box
                                 component="img"
-                                src={coin.image ?? ""}
-                                alt={coin.symbol ?? ""}
+                                src={row.thumb}
+                                alt={row.symbol}
                                 sx={{
-                                  width: 32,
-                                  height: 32,
+                                  width: 28,
+                                  height: 28,
                                   borderRadius: "50%",
                                   objectFit: "cover",
+                                  border: `1px solid ${borderColor}`,
                                 }}
                               />
                               <Stack>
-                                <Typography fontWeight={700}>
-                                  {coin.symbol}
+                                <Typography
+                                  fontWeight={700}
+                                  sx={{ fontSize: 14, lineHeight: 1.2 }}
+                                >
+                                  {row.name}
                                 </Typography>
                                 <Typography
                                   variant="caption"
                                   color="text.secondary"
+                                  sx={{
+                                    fontSize: 11,
+                                    letterSpacing: 0.5,
+                                    fontFamily: "monospace",
+                                  }}
                                 >
-                                  {coin.name ?? coin.symbol}
-                                </Typography>
-                              </Stack>
-                              <Stack
-                                direction="row"
-                                spacing={0.5}
-                                alignItems="center"
-                              >
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  price: {formatUSD(coin.current_price)}
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  volume: {formatUSD(coin.total_volume)}
-                                </Typography>
-                              </Stack>
-                              <Stack
-                                direction="row"
-                                spacing={0.5}
-                                alignItems="center"
-                                justifyContent="flex-end"
-                              >
-                                {isPositive ? (
-                                  <TrendingUpIcon
-                                    fontSize="small"
-                                    color="success"
-                                  />
-                                ) : (
-                                  <TrendingDownIcon
-                                    fontSize="small"
-                                    color="error"
-                                  />
-                                )}
-                                <Typography
-                                  variant="body2"
-                                  fontWeight={600}
-                                  color={
-                                    isPositive ? "success.main" : "error.main"
-                                  }
-                                >
-                                  {isPositive ? "+" : ""}
-                                  {change24.toFixed(2)}%
+                                  {String(row.symbol).toUpperCase()}
                                 </Typography>
                               </Stack>
                             </Stack>
-                          </ListItemButton>
-                        );
-                      })}
-                    </List>
-                    {coinsTotalPages > 1 && (
-                      <Stack alignItems="center" sx={{ mt: 1.5 }}>
-                        <Pagination
-                          color="primary"
-                          size="small"
-                          count={coinsTotalPages}
-                          page={coinPage}
-                          onChange={(_, p) => setCoinPage(p)}
-                        />
-                      </Stack>
-                    )}
-                  </>
-                )}
-              </Box>
-            </Stack>
-          </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 2 }}>
-            <Button onClick={handleCloseAddModal}>Cancel</Button>
-            <Button
-              variant="contained"
-              onClick={handleSaveAddCoin}
-              disabled={!selectedCoin || saving}
-              startIcon={saving ? <CircularProgress size={16} /> : null}
-            >
-              {saving ? "Saving..." : "Save"}
-            </Button>
-          </DialogActions>
-        </Dialog>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography fontWeight={600} sx={{ fontSize: 14 }}>
+                              {formatUSD(row.price)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Stack
+                              direction="row"
+                              spacing={0.5}
+                              alignItems="center"
+                              justifyContent="flex-end"
+                            >
+                              {isPositive ? (
+                                <TrendingUpIcon
+                                  sx={{ fontSize: 16, color: changeColor }}
+                                />
+                              ) : (
+                                <TrendingDownIcon
+                                  sx={{ fontSize: 16, color: changeColor }}
+                                />
+                              )}
+                              <Typography
+                                variant="body2"
+                                fontWeight={700}
+                                sx={{ color: changeColor, fontSize: 13 }}
+                              >
+                                {isPositive ? "+" : ""}
+                                {row.priceChange24hUsd.toFixed(2)}%
+                              </Typography>
+                            </Stack>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" color="text.secondary">
+                              {row.marketCap}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" color="text.secondary">
+                              {row.totalVolume}
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            {trendingTotalPages > 1 && (
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                alignItems="center"
+                justifyContent="space-between"
+                spacing={1}
+                sx={{
+                  px: 2,
+                  py: 2,
+                  borderTop: `1px solid ${borderColor}`,
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  {trendingTotalItems} coin • Halaman {trendingPage} dari{" "}
+                  {trendingTotalPages}
+                </Typography>
+                <Pagination
+                  color="primary"
+                  size="small"
+                  count={trendingTotalPages}
+                  page={trendingPage}
+                  onChange={(_, value) => setTrendingPage(value)}
+                  shape="rounded"
+                  showFirstButton
+                  showLastButton
+                />
+              </Stack>
+            )}
+          </>
+        ) : tab === "market" ? (
+          <>
+            <TableContainer sx={{ overflowX: "auto" }}>
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow
+                    sx={{
+                      "& .MuiTableCell-head": {
+                        fontWeight: 700,
+                        fontSize: 11,
+                        textTransform: "uppercase",
+                        letterSpacing: 0.5,
+                        color: "text.secondary",
+                        borderBottomColor: borderColor,
+                        py: 1.5,
+                        bgcolor: isDark ? "rgba(15,23,42,0.6)" : "action.hover",
+                      },
+                    }}
+                  >
+                    <TableCell align="center">#</TableCell>
+                    <TableCell>Coin</TableCell>
+                    <TableCell align="right">Price</TableCell>
+                    <TableCell align="right">24h %</TableCell>
+                    <TableCell align="right">Market Cap</TableCell>
+                    <TableCell align="right">Vol (24h)</TableCell>
+                    <TableCell align="right">High 24h</TableCell>
+                    <TableCell align="right">Low 24h</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {marketsItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={8}
+                        align="center"
+                        sx={{ py: 6, color: "text.secondary", borderColor }}
+                      >
+                        Tidak ada data.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    marketsItems.map((row) => {
+                      const change24h = row.price_change_percentage_24h ?? 0;
+                      const isPositive = change24h >= 0;
+                      const changeColor = isPositive ? "#22c55e" : "#ef4444";
+                      return (
+                        <TableRow
+                          key={`${row.id}-${row.symbol}`}
+                          hover
+                          sx={{
+                            "& .MuiTableCell-root": {
+                              borderBottomColor: borderColor,
+                              py: 1.5,
+                              fontVariantNumeric: "tabular-nums",
+                            },
+                            "&:hover": {
+                              bgcolor: isDark
+                                ? "rgba(148,163,184,0.06)"
+                                : "action.hover",
+                            },
+                          }}
+                        >
+                          <TableCell align="center" sx={{ fontWeight: 600 }}>
+                            <Chip
+                              label={row.market_cap_rank}
+                              size="small"
+                              sx={{
+                                height: 22,
+                                fontSize: 11,
+                                fontWeight: 700,
+                                bgcolor: isDark
+                                  ? "rgba(148,163,184,0.12)"
+                                  : "action.selected",
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Stack
+                              direction="row"
+                              spacing={1.5}
+                              alignItems="center"
+                            >
+                              <Box
+                                component="img"
+                                src={row.image}
+                                alt={row.symbol}
+                                sx={{
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: "50%",
+                                  objectFit: "cover",
+                                  border: `1px solid ${borderColor}`,
+                                }}
+                              />
+                              <Stack>
+                                <Typography
+                                  fontWeight={700}
+                                  sx={{ fontSize: 14, lineHeight: 1.2 }}
+                                >
+                                  {row.name}
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{
+                                    fontSize: 11,
+                                    letterSpacing: 0.5,
+                                    fontFamily: "monospace",
+                                  }}
+                                >
+                                  {String(row.symbol).toUpperCase()}
+                                </Typography>
+                              </Stack>
+                            </Stack>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography fontWeight={600} sx={{ fontSize: 14 }}>
+                              {formatUSD(row.current_price)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Stack
+                              direction="row"
+                              spacing={0.5}
+                              alignItems="center"
+                              justifyContent="flex-end"
+                            >
+                              {isPositive ? (
+                                <TrendingUpIcon
+                                  sx={{ fontSize: 16, color: changeColor }}
+                                />
+                              ) : (
+                                <TrendingDownIcon
+                                  sx={{ fontSize: 16, color: changeColor }}
+                                />
+                              )}
+                              <Typography
+                                variant="body2"
+                                fontWeight={700}
+                                sx={{ color: changeColor, fontSize: 13 }}
+                              >
+                                {isPositive ? "+" : ""}
+                                {change24h.toFixed(2)}%
+                              </Typography>
+                            </Stack>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" color="text.secondary">
+                              {formatUSD(row.market_cap)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" color="text.secondary">
+                              {formatUSD(row.total_volume)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" color="text.secondary">
+                              {formatUSD(row.high_24h)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" color="text.secondary">
+                              {formatUSD(row.low_24h)}
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            {marketsTotalPages > 1 && (
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                alignItems="center"
+                justifyContent="space-between"
+                spacing={1}
+                sx={{
+                  px: 2,
+                  py: 2,
+                  borderTop: `1px solid ${borderColor}`,
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  {marketsTotalItems} coin • Halaman {marketsPage} dari{" "}
+                  {marketsTotalPages}
+                </Typography>
+                <Pagination
+                  color="primary"
+                  size="small"
+                  count={marketsTotalPages}
+                  page={marketsPage}
+                  onChange={(_, value) => setMarketsPage(value)}
+                  shape="rounded"
+                  showFirstButton
+                  showLastButton
+                />
+              </Stack>
+            )}
+          </>
+        ) : (
+          <>
+            <TableContainer sx={{ overflowX: "auto" }}>
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow
+                    sx={{
+                      "& .MuiTableCell-head": {
+                        fontWeight: 700,
+                        fontSize: 11,
+                        textTransform: "uppercase",
+                        letterSpacing: 0.5,
+                        color: "text.secondary",
+                        borderBottomColor: borderColor,
+                        py: 1.5,
+                        bgcolor: isDark ? "rgba(15,23,42,0.6)" : "action.hover",
+                      },
+                    }}
+                  >
+                    <TableCell align="center">#</TableCell>
+                    <TableCell>Coin</TableCell>
+                    <TableCell align="right">Price</TableCell>
+                    <TableCell align="right">24h %</TableCell>
+                    <TableCell align="right">Market Cap</TableCell>
+                    <TableCell align="right">Vol (24h)</TableCell>
+                    <TableCell align="right">High 24h</TableCell>
+                    <TableCell align="right">Low 24h</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {marketItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={8}
+                        align="center"
+                        sx={{ py: 6, color: "text.secondary", borderColor }}
+                      >
+                        Tidak ada data.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    marketItems.map((row) => {
+                      const change24h = row.price_change_percentage_24h ?? 0;
+                      const isPositive = change24h >= 0;
+                      const changeColor = isPositive ? "#22c55e" : "#ef4444";
+                      return (
+                        <TableRow
+                          key={`${row.id}-${row.symbol}`}
+                          hover
+                          sx={{
+                            "& .MuiTableCell-root": {
+                              borderBottomColor: borderColor,
+                              py: 1.5,
+                              fontVariantNumeric: "tabular-nums",
+                            },
+                            "&:hover": {
+                              bgcolor: isDark
+                                ? "rgba(148,163,184,0.06)"
+                                : "action.hover",
+                            },
+                          }}
+                        >
+                          <TableCell align="center" sx={{ fontWeight: 600 }}>
+                            <Chip
+                              label={row.market_cap_rank}
+                              size="small"
+                              sx={{
+                                height: 22,
+                                fontSize: 11,
+                                fontWeight: 700,
+                                bgcolor: isDark
+                                  ? "rgba(148,163,184,0.12)"
+                                  : "action.selected",
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Stack
+                              direction="row"
+                              spacing={1.5}
+                              alignItems="center"
+                            >
+                              <Box
+                                component="img"
+                                src={row.image}
+                                alt={row.symbol}
+                                sx={{
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: "50%",
+                                  objectFit: "cover",
+                                  border: `1px solid ${borderColor}`,
+                                }}
+                              />
+                              <Stack>
+                                <Typography
+                                  fontWeight={700}
+                                  sx={{ fontSize: 14, lineHeight: 1.2 }}
+                                >
+                                  {row.name}
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{
+                                    fontSize: 11,
+                                    letterSpacing: 0.5,
+                                    fontFamily: "monospace",
+                                  }}
+                                >
+                                  {String(row.symbol).toUpperCase()}
+                                </Typography>
+                              </Stack>
+                            </Stack>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography fontWeight={600} sx={{ fontSize: 14 }}>
+                              {formatUSD(row.current_price)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Stack
+                              direction="row"
+                              spacing={0.5}
+                              alignItems="center"
+                              justifyContent="flex-end"
+                            >
+                              {isPositive ? (
+                                <TrendingUpIcon
+                                  sx={{ fontSize: 16, color: changeColor }}
+                                />
+                              ) : (
+                                <TrendingDownIcon
+                                  sx={{ fontSize: 16, color: changeColor }}
+                                />
+                              )}
+                              <Typography
+                                variant="body2"
+                                fontWeight={700}
+                                sx={{ color: changeColor, fontSize: 13 }}
+                              >
+                                {isPositive ? "+" : ""}
+                                {change24h.toFixed(2)}%
+                              </Typography>
+                            </Stack>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" color="text.secondary">
+                              {formatUSD(row.market_cap)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" color="text.secondary">
+                              {formatUSD(row.total_volume)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" color="text.secondary">
+                              {formatUSD(row.high_24h)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" color="text.secondary">
+                              {formatUSD(row.low_24h)}
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            {marketTotalPages > 1 && (
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                alignItems="center"
+                justifyContent="space-between"
+                spacing={1}
+                sx={{
+                  px: 2,
+                  py: 2,
+                  borderTop: `1px solid ${borderColor}`,
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  {marketTotalItems} coin • Halaman {marketPage} dari{" "}
+                  {marketTotalPages}
+                </Typography>
+                <Pagination
+                  color="primary"
+                  size="small"
+                  count={marketTotalPages}
+                  page={marketPage}
+                  onChange={(_, value) => setMarketPage(value)}
+                  shape="rounded"
+                  showFirstButton
+                  showLastButton
+                />
+              </Stack>
+            )}
+          </>
+        )}
       </Paper>
-
-      <ModalStyle
-        openModal={openModalDelete}
-        handleModalOnCancel={() => setOpenModalDelete(false)}
-        message={`Are you sure you want to delete ${modalDeleteData?.symbol}?`}
-        handleModal={() => {
-          handleDeleteListItem(modalDeleteData?.screenerId + "");
-          setOpenModalDelete(false);
-        }}
-      />
     </Box>
   );
 }
