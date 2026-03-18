@@ -87,7 +87,7 @@ export default function ListSmartMoneyView() {
     setErrorMessage(null);
     try {
       const result = await handleGetRequest({
-        path: `/smart-wallets?page=${page - 1}&size=${size}`,
+        path: `/smart-wallets?page=${page}&size=${size}`,
       });
       const data: SmartWalletListResponse = result?.data ?? result;
       const list = Array.isArray(data?.items) ? data.items : [];

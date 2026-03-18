@@ -101,7 +101,8 @@ export function ChatWidget() {
         bottom: { xs: 12, md: 20 },
         left: "50%",
         transform: "translateX(-50%)",
-        zIndex: (theme) => theme.zIndex.tooltip + 10,
+        // Keep widget below MUI Modal/Dialog layers
+        zIndex: (theme) => theme.zIndex.modal - 1,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
