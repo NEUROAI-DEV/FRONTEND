@@ -42,7 +42,7 @@ export default function RegisterView() {
       });
 
       if (res) {
-        navigate("/");
+        navigate("/login");
       }
     } finally {
       setSubmitting(false);

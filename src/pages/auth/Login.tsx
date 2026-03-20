@@ -6,10 +6,8 @@ import {
   Typography,
   Container,
   TextField,
-  Divider,
   Stack,
 } from "@mui/material";
-import GoogleIcon from "@mui/icons-material/Google";
 import { useNavigate } from "react-router-dom";
 import { useHttp } from "../../hooks/http";
 import { useToken } from "../../hooks/token";
@@ -45,11 +43,6 @@ export default function LoginView() {
     } catch (error) {
       console.log(error);
     }
-  };
-
-  const handleLoginWithGoogle = () => {
-    console.log("Login with Google (dummy)");
-    // nanti arahkan ke OAuth Google
   };
 
   return (
@@ -139,30 +132,6 @@ export default function LoginView() {
               Login
             </Button>
           </Stack>
-
-          {/* Divider */}
-          <Divider sx={{ my: 3 }}>
-            <Typography variant="body2" color="text.secondary">
-              OR
-            </Typography>
-          </Divider>
-
-          {/* Google Login */}
-          <Button
-            fullWidth
-            size="large"
-            variant="outlined"
-            startIcon={<GoogleIcon />}
-            sx={{
-              borderRadius: 2,
-              py: 1.2,
-              fontWeight: 600,
-              textTransform: "none",
-            }}
-            onClick={handleLoginWithGoogle}
-          >
-            Login with Google
-          </Button>
 
           {/* Footer link */}
           <Stack

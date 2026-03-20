@@ -18,3 +18,22 @@ export const formatUSD = (value: number): string => {
     maximumFractionDigits: 6,
   }).format(value);
 };
+
+export const formatIDR = (value: number): string => {
+  const compact = (n: number) =>
+    n
+      .toFixed(2)
+      .replace(/\.00$/, "")
+      .replace(/(\.\d)0$/, "$1");
+
+  if (value >= 1e12) return `Rp${compact(value / 1e12)}T`;
+  if (value >= 1e9) return `Rp${compact(value / 1e9)}B`;
+  if (value >= 1e6) return `Rp${compact(value / 1e6)}M`;
+  if (value >= 1e3) return `Rp${compact(value / 1e3)}k`;
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+};

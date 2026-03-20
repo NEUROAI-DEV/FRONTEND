@@ -87,7 +87,7 @@ export default function ListSmartMoneyView() {
     setErrorMessage(null);
     try {
       const result = await handleGetRequest({
-        path: `/smart-wallets?page=${page - 1}&size=${size}`,
+        path: `/smart-wallets?page=${page}&size=${size}`,
       });
       const data: SmartWalletListResponse = result?.data ?? result;
       const list = Array.isArray(data?.items) ? data.items : [];
@@ -256,8 +256,8 @@ function WalletCard({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  bgcolor: isDark ? "rgba(34,197,94,0.15)" : "success.light",
-                  color: "success.main",
+                  bgcolor: isDark ? "rgba(34,197,94,0.15)" : "gray.200",
+                  color: "gray.800",
                 }}
               >
                 <MonetizationOnIcon sx={{ fontSize: 22 }} />
@@ -434,8 +434,8 @@ function WalletDetailModal({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              bgcolor: isDark ? "rgba(34,197,94,0.15)" : "success.light",
-              color: "success.main",
+              bgcolor: isDark ? "rgba(34,197,94,0.15)" : "gray.200",
+              color: "gray.800",
             }}
           >
             <MonetizationOnIcon sx={{ fontSize: 22 }} />
