@@ -425,6 +425,8 @@ const DashboardView = () => {
                 return (
                   <Card
                     key={news.newsId}
+                    onClick={() => navigate(`/news/${news.newsId}`)}
+                    style={{ cursor: "pointer" }}
                     variant="outlined"
                     sx={{
                       width: 320,
@@ -563,6 +565,17 @@ const DashboardView = () => {
             </Stack>
           </Box>
         )}
+        <Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
+          <Link to="/news" style={{ textDecoration: "none" }}>
+            <Button
+              variant="outlined"
+              size="small"
+              sx={{ textTransform: "none" }}
+            >
+              View all
+            </Button>
+          </Link>
+        </Stack>
       </Box>
 
       {/* ================= DAILY MARKET SUMMARY (API) ================= */}

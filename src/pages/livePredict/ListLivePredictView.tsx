@@ -1,84 +1,74 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTheme } from "@mui/material/styles";
 import {
   Alert,
   Avatar,
   Box,
-  Button,
   Card,
   CardContent,
-  Checkbox,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  IconButton,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemButton,
-  ListItemText,
   Pagination,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
-import AddIcon from "@mui/icons-material/Add";
-import CloseIcon from "@mui/icons-material/Close";
 import Chart from "react-apexcharts";
 import type { ApexOptions } from "apexcharts";
 import { useHttp } from "../../hooks/http";
 import { convertTime } from "../../utilities/convertTime";
 import { formatUSD } from "../../utilities/convertNumberToCurrency";
-import type { ILivePredictSymbolItem } from "../../interfaces/LivePredict";
 
-type CoinItem = {
-  coinId: number;
-  coinName: string;
-  coinSymbol: string;
-  coinImage: string;
+type LivePredictResultPoint = {
+  timestamp: number;
+  datetime: string;
+  predicted_price: number;
+  change_amount?: number;
+  change_percent?: number;
+};
+
+type LivePredictItem = {
+  livePredictId: number;
+  livePredictSymbol: string;
+  livePredictIcon: string;
+  livePredictInterval: string;
+  livePredictLastPrice: string;
+  livePredictResults: LivePredictResultPoint[];
 };
 
 export default function ListLivePredictView() {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
-  const { handleGetRequest, handlePostRequest } = useHttp();
+  const { handleGetRequest } = useHttp();
 
-  const [items, setItems] = useState<ILivePredictSymbolItem[]>([]);
+  const [items, setItems] = useState<LivePredictItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [page, setPage] = useState(1);
-  const size = 10;
+  const [paginationModel, setPaginationModel] = useState({
+    pageSize: 10,
+    page: 0, // API uses 0-based pages: currentPage: 0, 1, ...
+  });
 
-  // Add coin dialog state
-  const [addOpen, setAddOpen] = useState(false);
-  const [coins, setCoins] = useState<CoinItem[]>([]);
-  const [coinsLoading, setCoinsLoading] = useState(false);
-  const [coinsError, setCoinsError] = useState<string | null>(null);
-  const [coinsPage, setCoinsPage] = useState(1);
-  const [coinsTotalPages, setCoinsTotalPages] = useState(1);
-  const [coinsSearch, setCoinsSearch] = useState("");
-  const [selectedSymbols, setSelectedSymbols] = useState<string[]>([]);
-  const [savingAdd, setSavingAdd] = useState(false);
-
-  const fetchList = async () => {
+  const fetchList = useCallback(async () => {
     setLoading(true);
     setErrorMessage(null);
     try {
       const result = await handleGetRequest({
-        path: `/live-predicts?page=${page - 1}&size=${size}`,
+        path: `/live-predicts?page=${paginationModel.page}&size=${paginationModel.pageSize}`,
       });
       const data = result?.data ?? result;
       const list = data?.items && Array.isArray(data.items) ? data.items : [];
-      setItems(list as ILivePredictSymbolItem[]);
+      setItems(list as LivePredictItem[]);
       setTotalItems(Number(data?.totalItems) ?? 0);
       setTotalPages(Number(data?.totalPages) ?? 1);
+      if (Number.isFinite(Number(data?.currentPage))) {
+        setPaginationModel((prev) => ({
+          ...prev,
+          page: Number(data.currentPage),
+        }));
+      }
     } catch (err) {
       setErrorMessage(
         err instanceof Error ? err.message : "Gagal memuat data.",
@@ -86,79 +76,16 @@ export default function ListLivePredictView() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchCoins = async () => {
-    setCoinsLoading(true);
-    setCoinsError(null);
-    try {
-      const query = new URLSearchParams({
-        page: String(coinsPage),
-        size: "10",
-        ...(coinsSearch.trim() ? { search: coinsSearch.trim() } : {}),
-      }).toString();
-
-      const result = await handleGetRequest({ path: `/coins?${query}` });
-      const data = result?.data ?? result;
-      const list = data?.items && Array.isArray(data.items) ? data.items : [];
-      setCoins(list as CoinItem[]);
-      setCoinsTotalPages(Number(data?.totalPages) ?? 1);
-    } catch (err) {
-      setCoinsError(err instanceof Error ? err.message : "Gagal memuat coin.");
-    } finally {
-      setCoinsLoading(false);
-    }
-  };
-
-  const openAddDialog = () => {
-    setSelectedSymbols(items.map((x) => x.symbol).filter(Boolean));
-    setCoinsPage(1);
-    setCoinsSearch("");
-    setAddOpen(true);
-  };
-
-  const closeAddDialog = () => {
-    if (savingAdd) return;
-    setAddOpen(false);
-  };
-
-  const toggleSymbol = (symbol: string) => {
-    setSelectedSymbols((prev) =>
-      prev.includes(symbol)
-        ? prev.filter((s) => s !== symbol)
-        : [...prev, symbol],
-    );
-  };
-
-  const submitAdd = async () => {
-    const livePredictSymbols = selectedSymbols
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .join(",");
-
-    if (!livePredictSymbols) return;
-
-    setSavingAdd(true);
-    try {
-      await handlePostRequest({
-        path: "/live-predicts",
-        body: { livePredictSymbols },
-      });
-      setAddOpen(false);
-      await fetchList();
-    } finally {
-      setSavingAdd(false);
-    }
-  };
+  }, []);
 
   useEffect(() => {
     fetchList();
-  }, [page]);
+    const intervalId = setInterval(() => {
+      fetchList();
+    }, 30000);
 
-  useEffect(() => {
-    if (!addOpen) return;
-    fetchCoins();
-  }, [addOpen, coinsPage]);
+    return () => clearInterval(intervalId);
+  }, [fetchList]);
 
   if (loading && items.length === 0) {
     return (
@@ -188,16 +115,6 @@ export default function ListLivePredictView() {
           Live Predict
         </Typography>
         <Box sx={{ flexGrow: 1 }} />
-        {items.length !== 0 && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={openAddDialog}
-            sx={{ textTransform: "none", fontWeight: 700 }}
-          >
-            Add Coin
-          </Button>
-        )}
       </Stack>
 
       {items.length === 0 ? (
@@ -234,18 +151,8 @@ export default function ListLivePredictView() {
               sx={{ lineHeight: 1.6 }}
             >
               Lihat pergerakan harga yang diprediksi untuk coin pilihan Anda.
-              Pilih coin, lalu kami akan menampilkan chart prediksi berdasarkan
-              analisis terkini.
+              Data akan tampil di sini setelah prediksi tersedia dari sistem.
             </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<AddIcon />}
-              onClick={openAddDialog}
-              sx={{ textTransform: "none", fontWeight: 700, px: 3, py: 1.5 }}
-            >
-              Pilih Coin & Buat Prediksi
-            </Button>
           </Stack>
         </Card>
       ) : (
@@ -259,7 +166,7 @@ export default function ListLivePredictView() {
         >
           {items.map((item) => (
             <Box
-              key={item.symbol}
+              key={item.livePredictSymbol}
               sx={{
                 width: { xs: "100%", md: "calc(50% - 8px)" },
                 minWidth: 0,
@@ -271,149 +178,27 @@ export default function ListLivePredictView() {
         </Box>
       )}
 
-      <Dialog open={addOpen} onClose={closeAddDialog} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 800, pr: 6 }}>
-          Pilih Coin
-          <IconButton
-            onClick={closeAddDialog}
-            sx={{ position: "absolute", right: 8, top: 8 }}
-            aria-label="close"
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          <Stack spacing={1.5}>
-            <TextField
-              size="small"
-              placeholder="Cari coin (nama / symbol)..."
-              value={coinsSearch}
-              onChange={(e) => setCoinsSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  setCoinsPage(1);
-                  fetchCoins();
-                }
-              }}
-            />
-            <Divider />
-
-            {coinsError && <Alert severity="error">{coinsError}</Alert>}
-
-            <Box sx={{ minHeight: 360 }}>
-              {coinsLoading ? (
-                <Stack
-                  alignItems="center"
-                  justifyContent="center"
-                  py={6}
-                  spacing={1.5}
-                >
-                  <CircularProgress size={22} />
-                  <Typography variant="body2" color="text.secondary">
-                    Memuat daftar coin...
-                  </Typography>
-                </Stack>
-              ) : (
-                <List dense disablePadding>
-                  {coins.map((c) => {
-                    const checked = selectedSymbols.includes(c.coinSymbol);
-                    return (
-                      <ListItem
-                        key={c.coinId}
-                        disablePadding
-                        secondaryAction={
-                          <Checkbox
-                            edge="end"
-                            checked={checked}
-                            onChange={() => toggleSymbol(c.coinSymbol)}
-                          />
-                        }
-                      >
-                        <ListItemButton
-                          onClick={() => toggleSymbol(c.coinSymbol)}
-                        >
-                          <ListItemAvatar>
-                            <Avatar
-                              src={c.coinImage}
-                              alt={c.coinName}
-                              sizes="small"
-                            />
-                          </ListItemAvatar>
-                          <ListItemText
-                            primary={
-                              <Stack
-                                direction="row"
-                                spacing={1}
-                                alignItems="center"
-                              >
-                                <Typography fontWeight={700}>
-                                  {c.coinName}
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  {c.coinSymbol}
-                                </Typography>
-                              </Stack>
-                            }
-                          />
-                        </ListItemButton>
-                      </ListItem>
-                    );
-                  })}
-                </List>
-              )}
-            </Box>
-
-            {coinsTotalPages > 1 && (
-              <Stack alignItems="center" pt={1}>
-                <Pagination
-                  count={coinsTotalPages}
-                  page={coinsPage}
-                  onChange={(_, p) => setCoinsPage(p)}
-                  size="small"
-                />
-              </Stack>
-            )}
-
-            <Typography variant="caption" color="text.secondary">
-              Dipilih: {selectedSymbols.length} coin
-            </Typography>
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-          <Button
-            variant="outlined"
-            onClick={closeAddDialog}
-            disabled={savingAdd}
-          >
-            Batal
-          </Button>
-          <Button
-            variant="contained"
-            onClick={submitAdd}
-            disabled={savingAdd || selectedSymbols.length === 0}
-            sx={{ textTransform: "none", fontWeight: 700 }}
-          >
-            {savingAdd ? "Menyimpan..." : "Simpan"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
       {totalPages > 1 && (
-        <Stack alignItems="center" spacing={1} sx={{ pt: 2 }}>
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={(_, p) => setPage(p)}
-            color="primary"
-            showFirstButton
-            showLastButton
-          />
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          alignItems={{ xs: "flex-start", sm: "center" }}
+          justifyContent="space-between"
+          spacing={1.5}
+          sx={{ mt: 3 }}
+        >
           <Typography variant="body2" color="text.secondary">
-            Total {totalItems} prediksi
+            Showing {items.length} of {totalItems} items
           </Typography>
+
+          <Pagination
+            color="primary"
+            shape="rounded"
+            page={paginationModel.page + 1}
+            count={Math.max(1, totalPages)}
+            onChange={(_, page) =>
+              setPaginationModel((prev) => ({ ...prev, page: page - 1 }))
+            }
+          />
         </Stack>
       )}
     </Stack>
@@ -426,22 +211,30 @@ function SymbolCard({
   item,
   isDark,
 }: {
-  item: ILivePredictSymbolItem;
+  item: LivePredictItem;
   isDark: boolean;
 }) {
-  const points = item.predictions ?? [];
-  const categories = points.map((p) =>
-    p.datetime
-      ? convertTime(p.datetime)
-      : new Date(p.timestamp).toLocaleTimeString("id-ID", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-  );
-  const seriesData = points.map((p) => Number(p.predicted_price));
-  const colorIndex = Math.abs(item.symbol.length) % CHART_COLORS.length;
+  const points = item.livePredictResults ?? [];
+
+  const { categories, seriesData } = useMemo(() => {
+    const cats = points.map((p) =>
+      p.datetime
+        ? convertTime(p.datetime)
+        : new Date(p.timestamp).toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+    );
+    const data = points.map((p) => Number(p.predicted_price));
+    return { categories: cats, seriesData: data };
+  }, [points]);
+
+  const colorIndex =
+    Math.abs(item.livePredictSymbol.length) % CHART_COLORS.length;
   const strokeColor = CHART_COLORS[colorIndex];
-  const isPositive = Number(item.change_percent) >= 0;
+  const lastPoint = points.length ? points[points.length - 1] : null;
+  const changePercent = Number(lastPoint?.change_percent ?? 0);
+  const isPositive = changePercent >= 0;
 
   const chartOptions: ApexOptions = {
     chart: {
@@ -493,7 +286,7 @@ function SymbolCard({
 
   const series = [
     {
-      name: item.symbol,
+      name: item.livePredictSymbol,
       data: seriesData,
     },
   ];
@@ -530,19 +323,19 @@ function SymbolCard({
             sx={{ mb: 0.5 }}
           >
             <Avatar
-              src={item.icon}
-              alt={item.symbol}
+              src={item.livePredictIcon}
+              alt={item.livePredictSymbol}
               sx={{ width: 32, height: 32 }}
             />
             <Typography fontWeight={700} variant="subtitle1">
-              {item.symbol}
+              {item.livePredictSymbol}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Interval: {item.interval}
+              Interval: {item.livePredictInterval}
             </Typography>
             <Stack direction="row" alignItems="center" spacing={0.5}>
               <Typography variant="body2" fontWeight={600}>
-                {formatUSD(Number(item.last_price))}
+                {formatUSD(Number(item.livePredictLastPrice))}
               </Typography>
               <Stack
                 direction="row"
@@ -568,7 +361,7 @@ function SymbolCard({
                   }}
                 >
                   {isPositive ? "+" : ""}
-                  {Number(item.change_percent).toFixed(2)}%
+                  {changePercent.toFixed(2)}%
                 </Typography>
               </Stack>
             </Stack>

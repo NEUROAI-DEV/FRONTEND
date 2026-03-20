@@ -18,7 +18,7 @@ import {
 import BreadCrumberStyle from "../../components/breadcrumb/Index";
 import { IconMenus } from "../../components/icon";
 import { useHttp } from "../../hooks/http";
-import { formatUSD } from "../../utilities/convertNumberToCurrency";
+import { formatIDR } from "../../utilities/convertNumberToCurrency";
 import { useNavigate } from "react-router-dom";
 
 interface ISubscriptionPlan {
@@ -211,7 +211,7 @@ export default function ListSubscriptionPlanView() {
                           gap: 0.5,
                         }}
                       >
-                        {formatUSD(
+                        {formatIDR(
                           plan.subscriptionPlanInterval === "YEARLY"
                             ? yearlyPrice
                             : monthlyPrice,
@@ -234,8 +234,8 @@ export default function ListSubscriptionPlanView() {
                           color="text.secondary"
                           sx={{ display: "block", mt: 0.5 }}
                         >
-                          {formatUSD(monthlyPrice)} / month •{" "}
-                          {formatUSD(yearlyPrice)} / year
+                          {formatIDR(monthlyPrice)} / month •{" "}
+                          {formatIDR(yearlyPrice)} / year
                         </Typography>
                       )}
                     </Box>
